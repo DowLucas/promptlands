@@ -29,6 +29,7 @@ const (
 	RarityRare      ItemRarity = "rare"
 	RarityEpic      ItemRarity = "epic"
 	RarityLegendary ItemRarity = "legendary"
+	RarityMythic    ItemRarity = "mythic"
 )
 
 // ItemDefinition defines a template for items loaded from JSON

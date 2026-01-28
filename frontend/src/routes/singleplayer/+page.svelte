@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import AgentEditor from '$lib/components/AgentEditor.svelte';
-	import type { AdversaryType } from '$lib/types';
+	import type { AdversaryType, MapConfig } from '$lib/types';
 
 	let adversaryTypes: AdversaryType[] = [];
 	let loading = false;
@@ -19,7 +19,7 @@
 		}
 	});
 
-	async function startGame(prompt: string, adversaries: string[]) {
+	async function startGame(prompt: string, adversaries: string[], mapConfig: MapConfig) {
 		loading = true;
 		error = '';
 
@@ -29,7 +29,13 @@
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					player_prompt: prompt,
-					adversaries: adversaries
+					adversaries: adversaries,
+					map_config: {
+						preset: mapConfig.preset,
+						size: mapConfig.size,
+						custom_size: mapConfig.custom_size || 0,
+						seed: mapConfig.seed || 0
+					}
 				})
 			});
 
@@ -58,7 +64,11 @@
 	{/if}
 
 	{#if loading}
-		<div class="loading">Starting game...</div>
+		<div class="loading">
+			<div class="loading-spinner"></div>
+			<p>Generating world...</p>
+			<p class="loading-hint">Large maps may take a moment to generate</p>
+		</div>
 	{:else}
 		<AgentEditor {adversaryTypes} onStart={startGame} />
 	{/if}
@@ -103,5 +113,25 @@
 		text-align: center;
 		padding: 48px;
 		color: #a0aec0;
+	}
+
+	.loading-spinner {
+		width: 48px;
+		height: 48px;
+		border: 4px solid #4a5568;
+		border-top-color: #48bb78;
+		border-radius: 50%;
+		animation: spin 1s linear infinite;
+		margin: 0 auto 16px;
+	}
+
+	.loading-hint {
+		font-size: 14px;
+		color: #718096;
+		margin-top: 8px;
+	}
+
+	@keyframes spin {
+		to { transform: rotate(360deg); }
 	}
 </style>
