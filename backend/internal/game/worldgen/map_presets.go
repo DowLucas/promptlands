@@ -20,33 +20,34 @@ func InfernalRealmsPreset() *MapConfig {
 		Name:        "Infernal Realms",
 		Description: "A world dominated by volcanic activity, lava flows, and badlands. High risk, high reward.",
 		Theme:       "volcanic",
-		Size:        MapSizeLarge,
+		Size:        MapSizeHuge, // 2048x2048
 		ChunkSize:   32,
 
+		// Noise scaled for larger maps
 		ElevationNoise: NoiseLayerConfig{
 			Octaves:     4,
-			Frequency:   0.007,
+			Frequency:   0.0018,
 			Persistence: 0.55,
 			Amplitude:   1.2,
 			SeedOffset:  0,
 		},
 		MoistureNoise: NoiseLayerConfig{
 			Octaves:     2,
-			Frequency:   0.010,
+			Frequency:   0.0025,
 			Persistence: 0.4,
 			Amplitude:   0.7, // Less moisture overall
 			SeedOffset:  1000,
 		},
 		TemperatureNoise: NoiseLayerConfig{
 			Octaves:     3,
-			Frequency:   0.006,
+			Frequency:   0.0015,
 			Persistence: 0.5,
 			Amplitude:   1.3, // Hotter overall
 			SeedOffset:  2000,
 		},
 		VariationNoise: NoiseLayerConfig{
 			Octaves:     2,
-			Frequency:   0.04,
+			Frequency:   0.01,
 			Persistence: 0.4,
 			Amplitude:   0.2,
 			SeedOffset:  3000,
@@ -64,18 +65,18 @@ func InfernalRealmsPreset() *MapConfig {
 		},
 
 		OceanBorder:      true,
-		OceanBorderWidth: 8,
-		RiverCount:       1,
+		OceanBorderWidth: 32,
+		RiverCount:       4,
 		LakeChance:       0.005,
 
 		Structures: StructureSpawnConfig{
-			ShrinesPerChunk:   0.10,
-			CachesPerChunk:    0.15,
-			PortalPairsPerMap: 5,
-			ObelisksPerChunk:  0.06,
-			DungeonsPerMap:    5,
-			VillagesPerMap:    1,
-			RuinsPerChunk:     0.08,
+			ShrinesPerChunk:   0.08,
+			CachesPerChunk:    0.12,
+			PortalPairsPerMap: 20,
+			ObelisksPerChunk:  0.05,
+			DungeonsPerMap:    16,
+			VillagesPerMap:    4,
+			RuinsPerChunk:     0.06,
 		},
 
 		ResourceDensity:      1.2,
@@ -92,33 +93,33 @@ func FrozenWastesPreset() *MapConfig {
 		Name:        "Frozen Wastes",
 		Description: "A frozen world where ice dominates and survival is challenging. Crystal formations hold ancient power.",
 		Theme:       "ice",
-		Size:        MapSizeLarge,
+		Size:        MapSizeHuge, // 2048x2048
 		ChunkSize:   32,
 
 		ElevationNoise: NoiseLayerConfig{
 			Octaves:     3,
-			Frequency:   0.006,
+			Frequency:   0.0015,
 			Persistence: 0.5,
 			Amplitude:   1.0,
 			SeedOffset:  0,
 		},
 		MoistureNoise: NoiseLayerConfig{
 			Octaves:     3,
-			Frequency:   0.008,
+			Frequency:   0.002,
 			Persistence: 0.5,
 			Amplitude:   1.0,
 			SeedOffset:  1000,
 		},
 		TemperatureNoise: NoiseLayerConfig{
 			Octaves:     2,
-			Frequency:   0.005,
+			Frequency:   0.0012,
 			Persistence: 0.5,
 			Amplitude:   0.5, // Much colder overall
 			SeedOffset:  2000,
 		},
 		VariationNoise: NoiseLayerConfig{
 			Octaves:     2,
-			Frequency:   0.03,
+			Frequency:   0.008,
 			Persistence: 0.4,
 			Amplitude:   0.1,
 			SeedOffset:  3000,
@@ -135,18 +136,18 @@ func FrozenWastesPreset() *MapConfig {
 		},
 
 		OceanBorder:      true,
-		OceanBorderWidth: 10,
-		RiverCount:       2,
+		OceanBorderWidth: 40,
+		RiverCount:       6,
 		LakeChance:       0.02,
 
 		Structures: StructureSpawnConfig{
-			ShrinesPerChunk:   0.08,
-			CachesPerChunk:    0.10,
-			PortalPairsPerMap: 4,
-			ObelisksPerChunk:  0.08,
-			DungeonsPerMap:    3,
-			VillagesPerMap:    2,
-			RuinsPerChunk:     0.05,
+			ShrinesPerChunk:   0.06,
+			CachesPerChunk:    0.08,
+			PortalPairsPerMap: 12,
+			ObelisksPerChunk:  0.06,
+			DungeonsPerMap:    10,
+			VillagesPerMap:    6,
+			RuinsPerChunk:     0.04,
 		},
 
 		ResourceDensity:      0.9,
@@ -163,33 +164,33 @@ func AncientWorldPreset() *MapConfig {
 		Name:        "Ancient World",
 		Description: "A world of ancient civilizations, mystical forests, and forgotten ruins. History awaits discovery.",
 		Theme:       "ancient",
-		Size:        MapSizeHuge,
+		Size:        MapSizeMassive, // 4096x4096 - epic exploration
 		ChunkSize:   32,
 
 		ElevationNoise: NoiseLayerConfig{
 			Octaves:     4,
-			Frequency:   0.005,
+			Frequency:   0.0008,
 			Persistence: 0.5,
 			Amplitude:   1.0,
 			SeedOffset:  0,
 		},
 		MoistureNoise: NoiseLayerConfig{
 			Octaves:     3,
-			Frequency:   0.007,
+			Frequency:   0.001,
 			Persistence: 0.55,
 			Amplitude:   1.1,
 			SeedOffset:  1000,
 		},
 		TemperatureNoise: NoiseLayerConfig{
 			Octaves:     2,
-			Frequency:   0.006,
+			Frequency:   0.0008,
 			Persistence: 0.5,
 			Amplitude:   0.9,
 			SeedOffset:  2000,
 		},
 		VariationNoise: NoiseLayerConfig{
 			Octaves:     2,
-			Frequency:   0.025,
+			Frequency:   0.004,
 			Persistence: 0.4,
 			Amplitude:   0.15,
 			SeedOffset:  3000,
@@ -207,18 +208,18 @@ func AncientWorldPreset() *MapConfig {
 		},
 
 		OceanBorder:      true,
-		OceanBorderWidth: 15,
-		RiverCount:       6,
+		OceanBorderWidth: 64,
+		RiverCount:       12,
 		LakeChance:       0.03,
 
 		Structures: StructureSpawnConfig{
-			ShrinesPerChunk:   0.12,
-			CachesPerChunk:    0.10,
-			PortalPairsPerMap: 8,
-			ObelisksPerChunk:  0.10,
-			DungeonsPerMap:    6,
-			VillagesPerMap:    5,
-			RuinsPerChunk:     0.12,
+			ShrinesPerChunk:   0.08,
+			CachesPerChunk:    0.08,
+			PortalPairsPerMap: 32,
+			ObelisksPerChunk:  0.08,
+			DungeonsPerMap:    24,
+			VillagesPerMap:    16,
+			RuinsPerChunk:     0.10,
 		},
 
 		ResourceDensity:      1.1,
@@ -235,33 +236,33 @@ func NeonWildernessPreset() *MapConfig {
 		Name:        "Neon Wilderness",
 		Description: "Alien terraforming left this world glowing with bioluminescent life. Strange and beautiful.",
 		Theme:       "scifi",
-		Size:        MapSizeLarge,
+		Size:        MapSizeHuge, // 2048x2048
 		ChunkSize:   32,
 
 		ElevationNoise: NoiseLayerConfig{
 			Octaves:     3,
-			Frequency:   0.007,
+			Frequency:   0.0018,
 			Persistence: 0.5,
 			Amplitude:   0.9,
 			SeedOffset:  0,
 		},
 		MoistureNoise: NoiseLayerConfig{
 			Octaves:     3,
-			Frequency:   0.006,
+			Frequency:   0.0015,
 			Persistence: 0.6,
 			Amplitude:   1.2, // Wetter world
 			SeedOffset:  1000,
 		},
 		TemperatureNoise: NoiseLayerConfig{
 			Octaves:     3,
-			Frequency:   0.005,
+			Frequency:   0.0012,
 			Persistence: 0.55,
 			Amplitude:   1.1, // Warmer
 			SeedOffset:  2000,
 		},
 		VariationNoise: NoiseLayerConfig{
 			Octaves:     2,
-			Frequency:   0.04,
+			Frequency:   0.01,
 			Persistence: 0.4,
 			Amplitude:   0.2,
 			SeedOffset:  3000,
@@ -279,18 +280,18 @@ func NeonWildernessPreset() *MapConfig {
 		},
 
 		OceanBorder:      true,
-		OceanBorderWidth: 10,
-		RiverCount:       5,
+		OceanBorderWidth: 40,
+		RiverCount:       10,
 		LakeChance:       0.03,
 
 		Structures: StructureSpawnConfig{
-			ShrinesPerChunk:   0.08,
-			CachesPerChunk:    0.15,
-			PortalPairsPerMap: 7,
-			ObelisksPerChunk:  0.05,
-			DungeonsPerMap:    4,
-			VillagesPerMap:    3,
-			RuinsPerChunk:     0.06,
+			ShrinesPerChunk:   0.06,
+			CachesPerChunk:    0.12,
+			PortalPairsPerMap: 20,
+			ObelisksPerChunk:  0.04,
+			DungeonsPerMap:    12,
+			VillagesPerMap:    8,
+			RuinsPerChunk:     0.05,
 		},
 
 		ResourceDensity:      1.3,
@@ -307,33 +308,33 @@ func VoidIncursionPreset() *MapConfig {
 		Name:        "Void Incursion",
 		Description: "Reality is collapsing as the Void spreads. A desperate battle for survival against cosmic corruption.",
 		Theme:       "horror",
-		Size:        MapSizeMedium,
+		Size:        MapSizeLarge, // 1024x1024 - more intense
 		ChunkSize:   32,
 
 		ElevationNoise: NoiseLayerConfig{
 			Octaves:     4,
-			Frequency:   0.008,
+			Frequency:   0.003,
 			Persistence: 0.5,
 			Amplitude:   1.1,
 			SeedOffset:  0,
 		},
 		MoistureNoise: NoiseLayerConfig{
 			Octaves:     3,
-			Frequency:   0.010,
+			Frequency:   0.0035,
 			Persistence: 0.45,
 			Amplitude:   0.9,
 			SeedOffset:  1000,
 		},
 		TemperatureNoise: NoiseLayerConfig{
 			Octaves:     3,
-			Frequency:   0.007,
+			Frequency:   0.0025,
 			Persistence: 0.55,
 			Amplitude:   1.0,
 			SeedOffset:  2000,
 		},
 		VariationNoise: NoiseLayerConfig{
 			Octaves:     3,
-			Frequency:   0.05,
+			Frequency:   0.015,
 			Persistence: 0.5,
 			Amplitude:   0.25,
 			SeedOffset:  3000,
@@ -352,18 +353,18 @@ func VoidIncursionPreset() *MapConfig {
 		},
 
 		OceanBorder:      true,
-		OceanBorderWidth: 6,
-		RiverCount:       2,
+		OceanBorderWidth: 24,
+		RiverCount:       4,
 		LakeChance:       0.01,
 
 		Structures: StructureSpawnConfig{
-			ShrinesPerChunk:   0.06,
-			CachesPerChunk:    0.08,
-			PortalPairsPerMap: 10,
-			ObelisksPerChunk:  0.12,
-			DungeonsPerMap:    6,
-			VillagesPerMap:    1,
-			RuinsPerChunk:     0.15,
+			ShrinesPerChunk:   0.05,
+			CachesPerChunk:    0.06,
+			PortalPairsPerMap: 24,
+			ObelisksPerChunk:  0.10,
+			DungeonsPerMap:    16,
+			VillagesPerMap:    2,
+			RuinsPerChunk:     0.12,
 		},
 
 		ResourceDensity:      0.8,
@@ -380,33 +381,33 @@ func CrystallineExpansePreset() *MapConfig {
 		Name:        "Crystalline Expanse",
 		Description: "A world where crystalline formations dominate the landscape, humming with arcane energy.",
 		Theme:       "crystal",
-		Size:        MapSizeLarge,
+		Size:        MapSizeHuge, // 2048x2048
 		ChunkSize:   32,
 
 		ElevationNoise: NoiseLayerConfig{
 			Octaves:     4,
-			Frequency:   0.006,
+			Frequency:   0.0015,
 			Persistence: 0.55,
 			Amplitude:   1.2, // More elevation variation
 			SeedOffset:  0,
 		},
 		MoistureNoise: NoiseLayerConfig{
 			Octaves:     3,
-			Frequency:   0.007,
+			Frequency:   0.0018,
 			Persistence: 0.5,
 			Amplitude:   1.0,
 			SeedOffset:  1000,
 		},
 		TemperatureNoise: NoiseLayerConfig{
 			Octaves:     2,
-			Frequency:   0.006,
+			Frequency:   0.0015,
 			Persistence: 0.5,
 			Amplitude:   0.85, // Cooler
 			SeedOffset:  2000,
 		},
 		VariationNoise: NoiseLayerConfig{
 			Octaves:     2,
-			Frequency:   0.03,
+			Frequency:   0.008,
 			Persistence: 0.4,
 			Amplitude:   0.15,
 			SeedOffset:  3000,
@@ -424,18 +425,18 @@ func CrystallineExpansePreset() *MapConfig {
 		},
 
 		OceanBorder:      true,
-		OceanBorderWidth: 12,
-		RiverCount:       4,
+		OceanBorderWidth: 48,
+		RiverCount:       8,
 		LakeChance:       0.02,
 
 		Structures: StructureSpawnConfig{
-			ShrinesPerChunk:   0.12,
-			CachesPerChunk:    0.14,
-			PortalPairsPerMap: 6,
-			ObelisksPerChunk:  0.08,
-			DungeonsPerMap:    4,
-			VillagesPerMap:    2,
-			RuinsPerChunk:     0.06,
+			ShrinesPerChunk:   0.10,
+			CachesPerChunk:    0.12,
+			PortalPairsPerMap: 16,
+			ObelisksPerChunk:  0.06,
+			DungeonsPerMap:    12,
+			VillagesPerMap:    6,
+			RuinsPerChunk:     0.05,
 		},
 
 		ResourceDensity:      1.4,

@@ -6,34 +6,35 @@ import (
 )
 
 // MapSize represents predefined map sizes for open-world feel
+// Larger maps create a more pronounced pixelated effect when zoomed out
 type MapSize string
 
 const (
-	MapSizeTiny    MapSize = "tiny"    // 32x32 - Quick games
-	MapSizeSmall   MapSize = "small"   // 64x64 - Short games
-	MapSizeMedium  MapSize = "medium"  // 128x128 - Standard games
-	MapSizeLarge   MapSize = "large"   // 256x256 - Long games
-	MapSizeHuge    MapSize = "huge"    // 512x512 - Epic games
-	MapSizeMassive MapSize = "massive" // 1024x1024 - Open world
+	MapSizeTiny    MapSize = "tiny"    // 128x128 - Quick games
+	MapSizeSmall   MapSize = "small"   // 256x256 - Short games
+	MapSizeMedium  MapSize = "medium"  // 512x512 - Standard games
+	MapSizeLarge   MapSize = "large"   // 1024x1024 - Long games
+	MapSizeHuge    MapSize = "huge"    // 2048x2048 - Epic games (pixelated aesthetic)
+	MapSizeMassive MapSize = "massive" // 4096x4096 - Massive open world
 )
 
 // GetMapSizeValue returns the actual size value
 func GetMapSizeValue(size MapSize) int {
 	switch size {
 	case MapSizeTiny:
-		return 32
+		return 128
 	case MapSizeSmall:
-		return 64
-	case MapSizeMedium:
-		return 128
-	case MapSizeLarge:
 		return 256
-	case MapSizeHuge:
+	case MapSizeMedium:
 		return 512
-	case MapSizeMassive:
+	case MapSizeLarge:
 		return 1024
+	case MapSizeHuge:
+		return 2048
+	case MapSizeMassive:
+		return 4096
 	default:
-		return 128
+		return 512
 	}
 }
 
@@ -137,40 +138,42 @@ func (c *MapConfig) GetChunkCount() int {
 
 // DefaultMapConfig returns a balanced default map configuration
 // Uses LOW frequency noise to create LARGE biome regions like the reference image
+// Large map size (2048x2048) creates pixelated aesthetic when zoomed out
 func DefaultMapConfig() *MapConfig {
 	return &MapConfig{
 		ID:          "default",
 		Name:        "Standard World",
 		Description: "A balanced procedurally generated world with large distinct biomes",
 		Theme:       "mixed",
-		Size:        MapSizeLarge, // 256x256 for open world feel
+		Size:        MapSizeHuge, // 2048x2048 for pixelated open world feel
 		ChunkSize:   32,
 
 		// LOW frequency = LARGE biome regions (like reference image)
+		// These values are tuned for 2048x2048 maps
 		ElevationNoise: NoiseLayerConfig{
 			Octaves:     3,
-			Frequency:   0.006, // Very low = huge elevation regions
+			Frequency:   0.0015, // Very low = massive elevation regions
 			Persistence: 0.5,
 			Amplitude:   1.0,
 			SeedOffset:  0,
 		},
 		MoistureNoise: NoiseLayerConfig{
 			Octaves:     3,
-			Frequency:   0.008, // Low = large moisture zones
+			Frequency:   0.002, // Low = large moisture zones
 			Persistence: 0.5,
 			Amplitude:   1.0,
 			SeedOffset:  1000,
 		},
 		TemperatureNoise: NoiseLayerConfig{
 			Octaves:     2,
-			Frequency:   0.005, // Very low = huge temperature bands
+			Frequency:   0.0012, // Very low = huge temperature bands
 			Persistence: 0.6,
 			Amplitude:   1.0,
 			SeedOffset:  2000,
 		},
 		VariationNoise: NoiseLayerConfig{
 			Octaves:     2,
-			Frequency:   0.03, // Slight variation for organic edges
+			Frequency:   0.008, // Slight variation for organic edges
 			Persistence: 0.4,
 			Amplitude:   0.15,
 			SeedOffset:  3000,
@@ -179,18 +182,18 @@ func DefaultMapConfig() *MapConfig {
 		BiomeDistributions: DefaultBiomeDistributions(),
 
 		OceanBorder:      true,
-		OceanBorderWidth: 12,
-		RiverCount:       4,
+		OceanBorderWidth: 48, // Proportionally larger for bigger map
+		RiverCount:       8,
 		LakeChance:       0.01,
 
 		Structures: StructureSpawnConfig{
-			ShrinesPerChunk:   0.08,
-			CachesPerChunk:    0.12,
-			PortalPairsPerMap: 6,
-			ObelisksPerChunk:  0.06,
-			DungeonsPerMap:    4,
-			VillagesPerMap:    3,
-			RuinsPerChunk:     0.04,
+			ShrinesPerChunk:   0.06,
+			CachesPerChunk:    0.10,
+			PortalPairsPerMap: 16,
+			ObelisksPerChunk:  0.04,
+			DungeonsPerMap:    12,
+			VillagesPerMap:    8,
+			RuinsPerChunk:     0.03,
 		},
 
 		ResourceDensity:      1.0,

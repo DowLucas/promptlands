@@ -15,8 +15,9 @@ game:
     # ancient_world, neon_wilderness, void_incursion, crystalline_expanse
     preset: "default"
 
-    # Map size: tiny (32), small (64), medium (128), large (256), huge (512), massive (1024)
-    size: "large"
+    # Map size: tiny (128), small (256), medium (512), large (1024), huge (2048), massive (4096)
+    # Larger maps create a more pixelated aesthetic when zoomed out
+    size: "huge"
 
     # Override size with a custom value (0 = use preset size)
     custom_size: 0
