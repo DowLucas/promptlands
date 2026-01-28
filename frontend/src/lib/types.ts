@@ -5,11 +5,50 @@ export interface Position {
 	y: number;
 }
 
+// Biome types for the new procedural generation system
+export type BiomeType =
+	| 'forest'
+	| 'desert'
+	| 'volcanic'
+	| 'ice'
+	| 'savanna'
+	| 'badlands'
+	| 'swamp'
+	| 'crystal'
+	| 'void'
+	| 'neon'
+	| 'plasma'
+	| 'ancient'
+	| 'ocean'
+	| 'mountain';
+
+// Legacy terrain types for backward compatibility
+export type TerrainType = 'plains' | 'forest' | 'mountain' | 'water';
+
 export interface Tile {
 	x: number;
 	y: number;
 	owner_id: string | null;
-	terrain: 'plains' | 'forest' | 'mountain' | 'water';
+	terrain: TerrainType; // Legacy field
+	biome?: BiomeType; // New biome field (optional for backward compat)
+}
+
+// Map configuration types
+export type MapSize = 'tiny' | 'small' | 'medium' | 'large' | 'huge' | 'massive';
+
+export interface MapPreset {
+	id: string;
+	name: string;
+	description: string;
+	theme: string;
+	size: MapSize;
+}
+
+export interface MapConfig {
+	preset: string;
+	size: MapSize;
+	custom_size?: number;
+	seed?: number;
 }
 
 export interface Agent {
@@ -31,7 +70,7 @@ export interface Agent {
 
 // Item System
 export type ItemCategory = 'tool' | 'consumable' | 'material' | 'placeable' | 'equipment';
-export type ItemRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+export type ItemRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'mythic';
 
 export interface ItemDefinition {
 	id: string;

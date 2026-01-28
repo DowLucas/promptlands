@@ -1,14 +1,43 @@
 import { Application, Container, Graphics, Text, TextStyle } from 'pixi.js';
-import type { Agent, Tile, WorldObject } from '$lib/types';
+import type { Agent, Tile, WorldObject, BiomeType } from '$lib/types';
 
-const TILE_SIZE = 28;
+// Base tile size - will be scaled for large worlds
+const BASE_TILE_SIZE = 28;
+
+// Biome colors matching the backend biome definitions
+const BIOME_COLORS: Record<BiomeType, number> = {
+	// Core biomes
+	forest: 0x228b22,      // Forest green
+	desert: 0xedc9af,      // Sandy beige
+	volcanic: 0x8b0000,    // Dark red
+	ice: 0xb0e0e6,         // Powder blue
+	savanna: 0xbdb76b,     // Dark khaki
+	badlands: 0xcd853f,    // Peru/tan
+	swamp: 0x556b2f,       // Dark olive green
+	crystal: 0xe6e6fa,     // Lavender
+
+	// Fantasy/Sci-Fi biomes
+	void: 0x191970,        // Midnight blue
+	neon: 0x39ff14,        // Neon green
+	plasma: 0xff1493,      // Deep pink
+	ancient: 0x8b4513,     // Saddle brown
+
+	// Barrier biomes
+	ocean: 0x1e90ff,       // Dodger blue
+	mountain: 0x696969     // Dim gray
+};
+
+// Legacy terrain colors for backward compatibility
+const TERRAIN_COLORS = {
+	plains: 0x7cb342,      // Light green
+	forest: 0x2e7d32,      // Dark green
+	mountain: 0x78909c,    // Blue-gray
+	water: 0x1976d2        // Ocean blue
+};
+
 const COLORS = {
 	background: 0x1a1a2e,
 	empty: 0x2d3748,
-	plains: 0x7cb342,    // Light green (improved visibility)
-	forest: 0x2e7d32,    // Dark green (improved visibility)
-	mountain: 0x78909c,  // Blue-gray (improved visibility)
-	water: 0x1976d2,     // Ocean blue (improved visibility)
 	gridLine: 0x4a5568,
 	player: 0xffd700,
 	adversary: 0xff6b6b,
@@ -50,6 +79,14 @@ interface AgentSprite {
 	currentY: number;
 }
 
+// Viewport bounds for culling
+interface ViewportBounds {
+	minX: number;
+	maxX: number;
+	minY: number;
+	maxY: number;
+}
+
 export class GameRenderer {
 	private app: Application;
 	private worldContainer: Container;
@@ -63,6 +100,14 @@ export class GameRenderer {
 	private playerAgentId: string | null = null;
 	private agentColors: Map<string, number> = new Map();
 	private animationFrame: number | null = null;
+	private tileSize: number = BASE_TILE_SIZE;
+	private tiles: Tile[] = [];
+	private lastViewport: ViewportBounds | null = null;
+
+	// Large map optimization settings
+	private isLargeMap: boolean = false;
+	private minZoom: number = 0.5;
+	private maxZoom: number = 3;
 
 	constructor() {
 		this.app = new Application();
@@ -79,7 +124,7 @@ export class GameRenderer {
 			width: 800,
 			height: 600,
 			backgroundColor: 0x1a1a2e,
-			antialias: true,
+			antialias: false, // Disable for better performance on large maps
 			resolution: window.devicePixelRatio || 1,
 			autoDensity: true
 		});
@@ -133,7 +178,7 @@ export class GameRenderer {
 	}
 
 	private centerWorld() {
-		const worldPixelSize = this.worldSize * TILE_SIZE;
+		const worldPixelSize = this.worldSize * this.tileSize;
 		this.worldContainer.x = (this.app.screen.width - worldPixelSize) / 2;
 		this.worldContainer.y = (this.app.screen.height - worldPixelSize) / 2;
 	}
@@ -173,7 +218,7 @@ export class GameRenderer {
 			e.preventDefault();
 			const scale = this.worldContainer.scale.x;
 			const delta = e.deltaY > 0 ? 0.9 : 1.1;
-			const newScale = Math.max(0.5, Math.min(3, scale * delta));
+			const newScale = Math.max(this.minZoom, Math.min(this.maxZoom, scale * delta));
 			this.worldContainer.scale.set(newScale);
 		});
 	}
@@ -184,6 +229,41 @@ export class GameRenderer {
 
 	setWorldSize(size: number) {
 		this.worldSize = size;
+
+		// Adapt tile size and zoom for large maps
+		if (size >= 1024) {
+			this.isLargeMap = true;
+			// For very large maps, use smaller tiles
+			if (size >= 2048) {
+				this.tileSize = 4; // Small pixels for huge maps
+				this.minZoom = 0.1;
+				this.maxZoom = 5;
+			} else {
+				this.tileSize = 8;
+				this.minZoom = 0.2;
+				this.maxZoom = 4;
+			}
+		} else if (size >= 512) {
+			this.isLargeMap = true;
+			this.tileSize = 12;
+			this.minZoom = 0.3;
+			this.maxZoom = 3;
+		} else {
+			this.isLargeMap = false;
+			this.tileSize = BASE_TILE_SIZE;
+			this.minZoom = 0.5;
+			this.maxZoom = 3;
+		}
+
+		// Set initial zoom for large maps
+		if (this.isLargeMap) {
+			const screenSize = Math.min(this.app.screen.width, this.app.screen.height);
+			const worldPixelSize = size * this.tileSize;
+			const fitZoom = screenSize / worldPixelSize;
+			const initialZoom = Math.max(this.minZoom, Math.min(1, fitZoom * 0.8));
+			this.worldContainer.scale.set(initialZoom);
+		}
+
 		this.drawGrid();
 		this.centerWorld();
 	}
@@ -191,23 +271,47 @@ export class GameRenderer {
 	private drawGrid() {
 		this.gridGraphics.clear();
 
-		const size = this.worldSize * TILE_SIZE;
+		// Skip grid for very large maps (performance)
+		if (this.worldSize >= 512) {
+			return;
+		}
+
+		const size = this.worldSize * this.tileSize;
 
 		// Draw grid lines
 		this.gridGraphics.setStrokeStyle({ width: 1, color: COLORS.gridLine, alpha: 0.3 });
 
 		for (let i = 0; i <= this.worldSize; i++) {
 			// Vertical lines
-			this.gridGraphics.moveTo(i * TILE_SIZE, 0);
-			this.gridGraphics.lineTo(i * TILE_SIZE, size);
+			this.gridGraphics.moveTo(i * this.tileSize, 0);
+			this.gridGraphics.lineTo(i * this.tileSize, size);
 			// Horizontal lines
-			this.gridGraphics.moveTo(0, i * TILE_SIZE);
-			this.gridGraphics.lineTo(size, i * TILE_SIZE);
+			this.gridGraphics.moveTo(0, i * this.tileSize);
+			this.gridGraphics.lineTo(size, i * this.tileSize);
 		}
 		this.gridGraphics.stroke();
 	}
 
+	// Get the color for a tile based on biome or terrain
+	private getTileColor(tile: Tile): number {
+		// Prefer biome if available
+		if (tile.biome && BIOME_COLORS[tile.biome]) {
+			return BIOME_COLORS[tile.biome];
+		}
+
+		// Fall back to legacy terrain colors
+		switch (tile.terrain) {
+			case 'forest': return TERRAIN_COLORS.forest;
+			case 'mountain': return TERRAIN_COLORS.mountain;
+			case 'water': return TERRAIN_COLORS.water;
+			default: return TERRAIN_COLORS.plains;
+		}
+	}
+
 	updateTiles(tiles: Tile[], agents: Agent[]) {
+		// Store tiles for potential re-renders
+		this.tiles = tiles;
+
 		// Build agent color map
 		this.agentColors.clear();
 		for (const agent of agents) {
@@ -217,27 +321,28 @@ export class GameRenderer {
 
 		this.tileGraphics.clear();
 
+		// For large maps, draw tiles as simple filled rectangles without gaps
+		const gap = this.isLargeMap ? 0 : 1;
+		const tileDrawSize = this.tileSize - (gap * 2);
+
 		for (const tile of tiles) {
-			const x = tile.x * TILE_SIZE;
-			const y = tile.y * TILE_SIZE;
+			const x = tile.x * this.tileSize;
+			const y = tile.y * this.tileSize;
 
-			// Get base terrain color
-			let terrainColor = COLORS.plains;
-			switch (tile.terrain) {
-				case 'forest': terrainColor = COLORS.forest; break;
-				case 'mountain': terrainColor = COLORS.mountain; break;
-				case 'water': terrainColor = COLORS.water; break;
-			}
+			// Get biome/terrain color
+			const terrainColor = this.getTileColor(tile);
 
-			// Draw base terrain
-			this.tileGraphics.rect(x + 1, y + 1, TILE_SIZE - 2, TILE_SIZE - 2);
-			this.tileGraphics.fill({ color: terrainColor, alpha: 0.6 });
+			// Draw base terrain - for large maps use full alpha for pixelated look
+			const terrainAlpha = this.isLargeMap ? 1.0 : 0.6;
+			this.tileGraphics.rect(x + gap, y + gap, tileDrawSize, tileDrawSize);
+			this.tileGraphics.fill({ color: terrainColor, alpha: terrainAlpha });
 
 			// If owned, draw ownership overlay on top of terrain
 			if (tile.owner_id) {
 				const ownerColor = this.agentColors.get(tile.owner_id) || COLORS.neutral;
-				this.tileGraphics.rect(x + 1, y + 1, TILE_SIZE - 2, TILE_SIZE - 2);
-				this.tileGraphics.fill({ color: ownerColor, alpha: 0.5 });
+				const ownerAlpha = this.isLargeMap ? 0.6 : 0.5;
+				this.tileGraphics.rect(x + gap, y + gap, tileDrawSize, tileDrawSize);
+				this.tileGraphics.fill({ color: ownerColor, alpha: ownerAlpha });
 			}
 		}
 	}
@@ -264,8 +369,8 @@ export class GameRenderer {
 				continue;
 			}
 
-			const targetX = agent.position.x * TILE_SIZE + TILE_SIZE / 2;
-			const targetY = agent.position.y * TILE_SIZE + TILE_SIZE / 2;
+			const targetX = agent.position.x * this.tileSize + this.tileSize / 2;
+			const targetY = agent.position.y * this.tileSize + this.tileSize / 2;
 
 			let sprite = this.agentSprites.get(agent.id);
 
@@ -294,41 +399,54 @@ export class GameRenderer {
 		const isPlayer = agent.id === this.playerAgentId;
 		const color = getAgentColor(agent.id, isPlayer);
 
-		// Agent body - larger and more visible
+		// Scale agent size based on tile size
+		const agentRadius = Math.max(2, this.tileSize / 2.5);
+		const strokeWidth = this.isLargeMap ? 1 : 2;
+
+		// Agent body
 		const body = new Graphics();
-		body.circle(0, 0, TILE_SIZE / 2.5);
+		body.circle(0, 0, agentRadius);
 		body.fill({ color });
-		body.setStrokeStyle({ width: 2, color: isPlayer ? 0xffffff : 0x333333 });
+		body.setStrokeStyle({ width: strokeWidth, color: isPlayer ? 0xffffff : 0x333333 });
 		body.stroke();
 		container.addChild(body);
 
-		// Inner highlight
-		const highlight = new Graphics();
-		highlight.circle(-2, -2, TILE_SIZE / 6);
-		highlight.fill({ color: 0xffffff, alpha: 0.3 });
-		container.addChild(highlight);
+		// Inner highlight (skip for very small tiles)
+		if (this.tileSize >= 12) {
+			const highlight = new Graphics();
+			highlight.circle(-agentRadius / 5, -agentRadius / 5, agentRadius / 3);
+			highlight.fill({ color: 0xffffff, alpha: 0.3 });
+			container.addChild(highlight);
+		}
 
-		// Name label
-		const style = new TextStyle({
-			fontSize: 11,
-			fill: 0xffffff,
-			fontFamily: 'Arial',
-			fontWeight: 'bold',
-			stroke: { color: 0x000000, width: 3 }
-		});
-		const label = new Text({ text: agent.name, style });
-		label.anchor.set(0.5, 2.5);
-		container.addChild(label);
+		// Name label (skip for very small tiles)
+		if (this.tileSize >= 8) {
+			const fontSize = Math.max(6, Math.min(11, this.tileSize / 2));
+			const style = new TextStyle({
+				fontSize,
+				fill: 0xffffff,
+				fontFamily: 'Arial',
+				fontWeight: 'bold',
+				stroke: { color: 0x000000, width: this.isLargeMap ? 2 : 3 }
+			});
+			const label = new Text({ text: agent.name, style });
+			label.anchor.set(0.5, 2.5);
+			container.addChild(label);
+		}
 
-		container.x = agent.position.x * TILE_SIZE + TILE_SIZE / 2;
-		container.y = agent.position.y * TILE_SIZE + TILE_SIZE / 2;
+		container.x = agent.position.x * this.tileSize + this.tileSize / 2;
+		container.y = agent.position.y * this.tileSize + this.tileSize / 2;
 
 		return container;
 	}
 
 	updateWorldObjects(objects: WorldObject[]) {
+		// For very large maps, limit object rendering to reduce overhead
+		const maxObjects = this.isLargeMap ? 500 : objects.length;
+		const objectsToRender = objects.slice(0, maxObjects);
+
 		// Remove old sprites
-		const currentIds = new Set(objects.map(o => o.id));
+		const currentIds = new Set(objectsToRender.map(o => o.id));
 		for (const [id, sprite] of this.objectSprites) {
 			if (!currentIds.has(id)) {
 				this.objectContainer.removeChild(sprite);
@@ -337,7 +455,7 @@ export class GameRenderer {
 		}
 
 		// Update or create sprites
-		for (const obj of objects) {
+		for (const obj of objectsToRender) {
 			if (this.objectSprites.has(obj.id)) continue;
 
 			const container = this.createObjectSprite(obj);
@@ -350,8 +468,8 @@ export class GameRenderer {
 
 	private createObjectSprite(obj: WorldObject): Container | null {
 		const container = new Container();
-		const x = obj.position.x * TILE_SIZE + TILE_SIZE / 2;
-		const y = obj.position.y * TILE_SIZE + TILE_SIZE / 2;
+		const x = obj.position.x * this.tileSize + this.tileSize / 2;
+		const y = obj.position.y * this.tileSize + this.tileSize / 2;
 
 		const graphics = new Graphics();
 
@@ -379,14 +497,16 @@ export class GameRenderer {
 	}
 
 	private drawStructure(g: Graphics, obj: WorldObject) {
-		const size = TILE_SIZE / 2.5;
+		const size = Math.max(2, this.tileSize / 2.5);
 		switch (obj.structure_type) {
 			case 'wall':
 				// Brown square for wall
 				g.rect(-size, -size, size * 2, size * 2);
 				g.fill({ color: 0x8b4513 });
-				g.setStrokeStyle({ width: 1, color: 0x5c3317 });
-				g.stroke();
+				if (!this.isLargeMap) {
+					g.setStrokeStyle({ width: 1, color: 0x5c3317 });
+					g.stroke();
+				}
 				break;
 			case 'beacon':
 				// Cyan diamond for beacon
@@ -396,8 +516,10 @@ export class GameRenderer {
 				g.lineTo(-size, 0);
 				g.closePath();
 				g.fill({ color: 0x00ffff, alpha: 0.7 });
-				g.setStrokeStyle({ width: 2, color: 0x00cccc });
-				g.stroke();
+				if (!this.isLargeMap) {
+					g.setStrokeStyle({ width: 2, color: 0x00cccc });
+					g.stroke();
+				}
 				break;
 			case 'trap':
 				// Hidden traps shouldn't be visible, but if revealed show as red
@@ -410,7 +532,7 @@ export class GameRenderer {
 	}
 
 	private drawResource(g: Graphics, obj: WorldObject) {
-		const size = TILE_SIZE / 3;
+		const size = Math.max(2, this.tileSize / 3);
 		let color = 0x888888;
 
 		switch (obj.resource_type) {
@@ -431,25 +553,14 @@ export class GameRenderer {
 		// Draw as a small circle/node
 		g.circle(0, 0, size);
 		g.fill({ color, alpha: 0.8 });
-		g.setStrokeStyle({ width: 1, color: 0x333333 });
-		g.stroke();
-
-		// Show remaining count
-		if (obj.remaining !== undefined && obj.remaining > 0) {
-			const style = new TextStyle({
-				fontSize: 8,
-				fill: 0xffffff,
-				fontFamily: 'Arial',
-				fontWeight: 'bold'
-			});
-			const text = new Text({ text: String(obj.remaining), style });
-			text.anchor.set(0.5, 0.5);
-			// Note: Text needs to be on parent container, not graphics
+		if (!this.isLargeMap) {
+			g.setStrokeStyle({ width: 1, color: 0x333333 });
+			g.stroke();
 		}
 	}
 
 	private drawInteractive(g: Graphics, obj: WorldObject) {
-		const size = TILE_SIZE / 3;
+		const size = Math.max(2, this.tileSize / 3);
 
 		switch (obj.interactive_type) {
 			case 'shrine':
@@ -460,8 +571,10 @@ export class GameRenderer {
 				// Brown chest
 				g.rect(-size, -size / 2, size * 2, size);
 				g.fill({ color: 0xdaa520 });
-				g.setStrokeStyle({ width: 1, color: 0x8b4513 });
-				g.stroke();
+				if (!this.isLargeMap) {
+					g.setStrokeStyle({ width: 1, color: 0x8b4513 });
+					g.stroke();
+				}
 				break;
 			case 'portal':
 				// Purple swirl
@@ -474,25 +587,29 @@ export class GameRenderer {
 				// Gray pillar
 				g.rect(-size / 3, -size, size * 2 / 3, size * 2);
 				g.fill({ color: 0x696969 });
-				g.setStrokeStyle({ width: 1, color: 0x333333 });
-				g.stroke();
+				if (!this.isLargeMap) {
+					g.setStrokeStyle({ width: 1, color: 0x333333 });
+					g.stroke();
+				}
 				break;
 		}
 
-		// Show if activated
-		if (obj.activated) {
+		// Show if activated (skip for very small tiles)
+		if (obj.activated && this.tileSize >= 8) {
 			g.circle(0, -size - 4, 3);
 			g.fill({ color: 0x00ff00 });
 		}
 	}
 
 	private drawDroppedItem(g: Graphics) {
-		const size = TILE_SIZE / 4;
+		const size = Math.max(2, this.tileSize / 4);
 		// Simple yellow bag/pouch
 		g.circle(0, 0, size);
 		g.fill({ color: 0xffa500, alpha: 0.8 });
-		g.setStrokeStyle({ width: 1, color: 0x8b4513 });
-		g.stroke();
+		if (!this.isLargeMap) {
+			g.setStrokeStyle({ width: 1, color: 0x8b4513 });
+			g.stroke();
+		}
 	}
 
 	private drawStar(g: Graphics, cx: number, cy: number, size: number, points: number, color: number) {
@@ -519,5 +636,25 @@ export class GameRenderer {
 			cancelAnimationFrame(this.animationFrame);
 		}
 		this.app.destroy(true);
+	}
+
+	// Get current zoom level
+	getZoom(): number {
+		return this.worldContainer.scale.x;
+	}
+
+	// Set zoom level
+	setZoom(zoom: number) {
+		const clampedZoom = Math.max(this.minZoom, Math.min(this.maxZoom, zoom));
+		this.worldContainer.scale.set(clampedZoom);
+	}
+
+	// Center on a specific position
+	centerOn(x: number, y: number) {
+		const worldX = x * this.tileSize + this.tileSize / 2;
+		const worldY = y * this.tileSize + this.tileSize / 2;
+		const scale = this.worldContainer.scale.x;
+		this.worldContainer.x = this.app.screen.width / 2 - worldX * scale;
+		this.worldContainer.y = this.app.screen.height / 2 - worldY * scale;
 	}
 }
