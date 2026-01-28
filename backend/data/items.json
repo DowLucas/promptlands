@@ -1,0 +1,168 @@
+{
+  "items": [
+    {
+      "id": "wood",
+      "name": "Wood",
+      "description": "Basic building material harvested from forests",
+      "category": "material",
+      "rarity": "common",
+      "max_stack": 64
+    },
+    {
+      "id": "stone",
+      "name": "Stone",
+      "description": "Sturdy material found near mountains and rocky terrain",
+      "category": "material",
+      "rarity": "common",
+      "max_stack": 64
+    },
+    {
+      "id": "crystal",
+      "name": "Crystal",
+      "description": "Rare crystalline material with magical properties",
+      "category": "material",
+      "rarity": "rare",
+      "max_stack": 32
+    },
+    {
+      "id": "herb",
+      "name": "Herb",
+      "description": "Medicinal plant used for crafting potions",
+      "category": "material",
+      "rarity": "common",
+      "max_stack": 32
+    },
+    {
+      "id": "wall",
+      "name": "Stone Wall",
+      "description": "A sturdy wall that blocks movement",
+      "category": "placeable",
+      "rarity": "common",
+      "max_stack": 10,
+      "energy_cost": 5,
+      "placeable": true,
+      "properties": {
+        "hp": 3,
+        "blocks_movement": true
+      }
+    },
+    {
+      "id": "beacon",
+      "name": "Vision Beacon",
+      "description": "A beacon that extends your vision radius",
+      "category": "placeable",
+      "rarity": "uncommon",
+      "max_stack": 5,
+      "energy_cost": 8,
+      "placeable": true,
+      "properties": {
+        "vision_bonus": 2
+      }
+    },
+    {
+      "id": "trap",
+      "name": "Hidden Trap",
+      "description": "A concealed trap that damages enemies who step on it",
+      "category": "placeable",
+      "rarity": "uncommon",
+      "max_stack": 5,
+      "energy_cost": 4,
+      "placeable": true,
+      "properties": {
+        "damage": 1,
+        "hidden": true
+      }
+    },
+    {
+      "id": "health_potion",
+      "name": "Health Potion",
+      "description": "Restores 1 HP when consumed",
+      "category": "consumable",
+      "rarity": "common",
+      "max_stack": 5,
+      "usable": true,
+      "consumable": true,
+      "properties": {
+        "heal_amount": 1
+      }
+    },
+    {
+      "id": "energy_potion",
+      "name": "Energy Potion",
+      "description": "Restores 20 energy when consumed",
+      "category": "consumable",
+      "rarity": "common",
+      "max_stack": 5,
+      "usable": true,
+      "consumable": true,
+      "properties": {
+        "energy_amount": 20
+      }
+    },
+    {
+      "id": "speed_potion",
+      "name": "Speed Potion",
+      "description": "Grants an extra action next turn",
+      "category": "consumable",
+      "rarity": "rare",
+      "max_stack": 3,
+      "usable": true,
+      "consumable": true,
+      "properties": {
+        "extra_actions": 1
+      }
+    },
+    {
+      "id": "scan_crystal",
+      "name": "Scan Crystal",
+      "description": "Reveals the entire map for one turn",
+      "category": "consumable",
+      "rarity": "epic",
+      "max_stack": 2,
+      "usable": true,
+      "consumable": true,
+      "properties": {
+        "full_vision": true
+      }
+    },
+    {
+      "id": "sword",
+      "name": "Iron Sword",
+      "description": "A basic weapon that increases damage dealt",
+      "category": "equipment",
+      "rarity": "uncommon",
+      "max_stack": 1,
+      "equippable": true,
+      "properties": {
+        "damage_bonus": 1,
+        "slot": "weapon"
+      }
+    },
+    {
+      "id": "armor",
+      "name": "Leather Armor",
+      "description": "Basic armor that increases max HP",
+      "category": "equipment",
+      "rarity": "uncommon",
+      "max_stack": 1,
+      "equippable": true,
+      "properties": {
+        "hp_bonus": 1,
+        "slot": "armor"
+      }
+    },
+    {
+      "id": "scout_ring",
+      "name": "Scout's Ring",
+      "description": "A magical ring that increases vision range",
+      "category": "equipment",
+      "rarity": "rare",
+      "max_stack": 1,
+      "equippable": true,
+      "properties": {
+        "vision_bonus": 1,
+        "slot": "trinket"
+      }
+    }
+  ]
+}

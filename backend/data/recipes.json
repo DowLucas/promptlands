@@ -1,0 +1,141 @@
+{
+  "recipes": [
+    {
+      "id": "craft_wall",
+      "name": "Craft Stone Wall",
+      "description": "Create a defensive wall from stone",
+      "result": {
+        "item_id": "wall",
+        "quantity": 1
+      },
+      "ingredients": {
+        "stone": 3
+      },
+      "energy_cost": 2
+    },
+    {
+      "id": "craft_trap",
+      "name": "Craft Hidden Trap",
+      "description": "Create a concealed trap to damage enemies",
+      "result": {
+        "item_id": "trap",
+        "quantity": 1
+      },
+      "ingredients": {
+        "wood": 2,
+        "stone": 1
+      },
+      "energy_cost": 2
+    },
+    {
+      "id": "craft_beacon",
+      "name": "Craft Vision Beacon",
+      "description": "Create a beacon to extend your vision",
+      "result": {
+        "item_id": "beacon",
+        "quantity": 1
+      },
+      "ingredients": {
+        "stone": 2,
+        "crystal": 1
+      },
+      "energy_cost": 3
+    },
+    {
+      "id": "craft_health_potion",
+      "name": "Craft Health Potion",
+      "description": "Brew a potion to restore health",
+      "result": {
+        "item_id": "health_potion",
+        "quantity": 1
+      },
+      "ingredients": {
+        "herb": 2
+      },
+      "energy_cost": 1
+    },
+    {
+      "id": "craft_energy_potion",
+      "name": "Craft Energy Potion",
+      "description": "Brew a potion to restore energy",
+      "result": {
+        "item_id": "energy_potion",
+        "quantity": 1
+      },
+      "ingredients": {
+        "herb": 1,
+        "crystal": 1
+      },
+      "energy_cost": 2
+    },
+    {
+      "id": "craft_speed_potion",
+      "name": "Craft Speed Potion",
+      "description": "Brew a potion for an extra action",
+      "result": {
+        "item_id": "speed_potion",
+        "quantity": 1
+      },
+      "ingredients": {
+        "herb": 2,
+        "crystal": 2
+      },
+      "energy_cost": 5
+    },
+    {
+      "id": "craft_scan_crystal",
+      "name": "Craft Scan Crystal",
+      "description": "Create a crystal that reveals the entire map",
+      "result": {
+        "item_id": "scan_crystal",
+        "quantity": 1
+      },
+      "ingredients": {
+        "crystal": 5
+      },
+      "energy_cost": 10
+    },
+    {
+      "id": "craft_sword",
+      "name": "Forge Iron Sword",
+      "description": "Forge a weapon to increase damage",
+      "result": {
+        "item_id": "sword",
+        "quantity": 1
+      },
+      "ingredients": {
+        "stone": 5,
+        "wood": 2
+      },
+      "energy_cost": 8
+    },
+    {
+      "id": "craft_armor",
+      "name": "Craft Leather Armor",
+      "description": "Create armor to increase max HP",
+      "result": {
+        "item_id": "armor",
+        "quantity": 1
+      },
+      "ingredients": {
+        "wood": 4,
+        "herb": 2
+      },
+      "energy_cost": 8
+    },
+    {
+      "id": "craft_scout_ring",
+      "name": "Craft Scout's Ring",
+      "description": "Create a ring to extend vision range",
+      "result": {
+        "item_id": "scout_ring",
+        "quantity": 1
+      },
+      "ingredients": {
+        "crystal": 3,
+        "stone": 2
+      },
+      "energy_cost": 10
+    }
+  ]
+}

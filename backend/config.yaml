@@ -1,0 +1,25 @@
+server:
+  port: 8080
+  host: "0.0.0.0"
+
+game:
+  tick_duration: 10s
+  map_size: 20
+  max_players: 4
+  vision_radius: 3
+  max_memory_items: 10
+  win_after_ticks: 100
+
+llm:
+  provider: gemini
+  model: gemini-2.5-flash-lite
+  timeout: 8s
+  max_tokens: 256
+
+database:
+  postgres_url: postgres://promptlands:promptlands@localhost:5432/promptlands?sslmode=disable
+  redis_url: redis://localhost:6379
+
+dev:
+  enabled: false
+  mock_llm: false
