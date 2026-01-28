@@ -1,5 +1,5 @@
 import { Application, Container, Graphics, Text, TextStyle } from 'pixi.js';
-import type { Agent, Tile } from '$lib/types';
+import type { Agent, Tile, WorldObject } from '$lib/types';
 
 const TILE_SIZE = 28;
 const COLORS = {
@@ -54,9 +54,11 @@ export class GameRenderer {
 	private app: Application;
 	private worldContainer: Container;
 	private agentContainer: Container;
+	private objectContainer: Container;
 	private gridGraphics: Graphics;
 	private tileGraphics: Graphics;
 	private agentSprites: Map<string, AgentSprite> = new Map();
+	private objectSprites: Map<string, Container> = new Map();
 	private worldSize: number = 20;
 	private playerAgentId: string | null = null;
 	private agentColors: Map<string, number> = new Map();
@@ -66,6 +68,7 @@ export class GameRenderer {
 		this.app = new Application();
 		this.worldContainer = new Container();
 		this.agentContainer = new Container();
+		this.objectContainer = new Container();
 		this.gridGraphics = new Graphics();
 		this.tileGraphics = new Graphics();
 	}
@@ -83,6 +86,7 @@ export class GameRenderer {
 
 		this.worldContainer.addChild(this.tileGraphics);
 		this.worldContainer.addChild(this.gridGraphics);
+		this.worldContainer.addChild(this.objectContainer);
 		this.worldContainer.addChild(this.agentContainer);
 		this.app.stage.addChild(this.worldContainer);
 
@@ -250,6 +254,16 @@ export class GameRenderer {
 
 		// Update or create sprites
 		for (const agent of agents) {
+			// Skip dead agents - don't render them
+			if (agent.is_dead) {
+				const existingSprite = this.agentSprites.get(agent.id);
+				if (existingSprite) {
+					this.agentContainer.removeChild(existingSprite.container);
+					this.agentSprites.delete(agent.id);
+				}
+				continue;
+			}
+
 			const targetX = agent.position.x * TILE_SIZE + TILE_SIZE / 2;
 			const targetY = agent.position.y * TILE_SIZE + TILE_SIZE / 2;
 
@@ -310,6 +324,189 @@ export class GameRenderer {
 		container.y = agent.position.y * TILE_SIZE + TILE_SIZE / 2;
 
 		return container;
+	}
+
+	updateWorldObjects(objects: WorldObject[]) {
+		// Remove old sprites
+		const currentIds = new Set(objects.map(o => o.id));
+		for (const [id, sprite] of this.objectSprites) {
+			if (!currentIds.has(id)) {
+				this.objectContainer.removeChild(sprite);
+				this.objectSprites.delete(id);
+			}
+		}
+
+		// Update or create sprites
+		for (const obj of objects) {
+			if (this.objectSprites.has(obj.id)) continue;
+
+			const container = this.createObjectSprite(obj);
+			if (container) {
+				this.objectSprites.set(obj.id, container);
+				this.objectContainer.addChild(container);
+			}
+		}
+	}
+
+	private createObjectSprite(obj: WorldObject): Container | null {
+		const container = new Container();
+		const x = obj.position.x * TILE_SIZE + TILE_SIZE / 2;
+		const y = obj.position.y * TILE_SIZE + TILE_SIZE / 2;
+
+		const graphics = new Graphics();
+
+		switch (obj.type) {
+			case 'structure':
+				this.drawStructure(graphics, obj);
+				break;
+			case 'resource':
+				this.drawResource(graphics, obj);
+				break;
+			case 'interactive':
+				this.drawInteractive(graphics, obj);
+				break;
+			case 'dropped_item':
+				this.drawDroppedItem(graphics);
+				break;
+			default:
+				return null;
+		}
+
+		container.addChild(graphics);
+		container.x = x;
+		container.y = y;
+		return container;
+	}
+
+	private drawStructure(g: Graphics, obj: WorldObject) {
+		const size = TILE_SIZE / 2.5;
+		switch (obj.structure_type) {
+			case 'wall':
+				// Brown square for wall
+				g.rect(-size, -size, size * 2, size * 2);
+				g.fill({ color: 0x8b4513 });
+				g.setStrokeStyle({ width: 1, color: 0x5c3317 });
+				g.stroke();
+				break;
+			case 'beacon':
+				// Cyan diamond for beacon
+				g.moveTo(0, -size);
+				g.lineTo(size, 0);
+				g.lineTo(0, size);
+				g.lineTo(-size, 0);
+				g.closePath();
+				g.fill({ color: 0x00ffff, alpha: 0.7 });
+				g.setStrokeStyle({ width: 2, color: 0x00cccc });
+				g.stroke();
+				break;
+			case 'trap':
+				// Hidden traps shouldn't be visible, but if revealed show as red
+				if (!obj.hidden) {
+					g.circle(0, 0, size / 2);
+					g.fill({ color: 0xff0000, alpha: 0.5 });
+				}
+				break;
+		}
+	}
+
+	private drawResource(g: Graphics, obj: WorldObject) {
+		const size = TILE_SIZE / 3;
+		let color = 0x888888;
+
+		switch (obj.resource_type) {
+			case 'wood':
+				color = 0x8b4513; // Brown
+				break;
+			case 'stone':
+				color = 0x808080; // Gray
+				break;
+			case 'crystal':
+				color = 0x9966ff; // Purple
+				break;
+			case 'herb':
+				color = 0x00ff00; // Green
+				break;
+		}
+
+		// Draw as a small circle/node
+		g.circle(0, 0, size);
+		g.fill({ color, alpha: 0.8 });
+		g.setStrokeStyle({ width: 1, color: 0x333333 });
+		g.stroke();
+
+		// Show remaining count
+		if (obj.remaining !== undefined && obj.remaining > 0) {
+			const style = new TextStyle({
+				fontSize: 8,
+				fill: 0xffffff,
+				fontFamily: 'Arial',
+				fontWeight: 'bold'
+			});
+			const text = new Text({ text: String(obj.remaining), style });
+			text.anchor.set(0.5, 0.5);
+			// Note: Text needs to be on parent container, not graphics
+		}
+	}
+
+	private drawInteractive(g: Graphics, obj: WorldObject) {
+		const size = TILE_SIZE / 3;
+
+		switch (obj.interactive_type) {
+			case 'shrine':
+				// Gold star
+				this.drawStar(g, 0, 0, size, 5, 0xffd700);
+				break;
+			case 'cache':
+				// Brown chest
+				g.rect(-size, -size / 2, size * 2, size);
+				g.fill({ color: 0xdaa520 });
+				g.setStrokeStyle({ width: 1, color: 0x8b4513 });
+				g.stroke();
+				break;
+			case 'portal':
+				// Purple swirl
+				g.circle(0, 0, size);
+				g.fill({ color: 0x9932cc, alpha: 0.7 });
+				g.circle(0, 0, size / 2);
+				g.fill({ color: 0xff00ff, alpha: 0.5 });
+				break;
+			case 'obelisk':
+				// Gray pillar
+				g.rect(-size / 3, -size, size * 2 / 3, size * 2);
+				g.fill({ color: 0x696969 });
+				g.setStrokeStyle({ width: 1, color: 0x333333 });
+				g.stroke();
+				break;
+		}
+
+		// Show if activated
+		if (obj.activated) {
+			g.circle(0, -size - 4, 3);
+			g.fill({ color: 0x00ff00 });
+		}
+	}
+
+	private drawDroppedItem(g: Graphics) {
+		const size = TILE_SIZE / 4;
+		// Simple yellow bag/pouch
+		g.circle(0, 0, size);
+		g.fill({ color: 0xffa500, alpha: 0.8 });
+		g.setStrokeStyle({ width: 1, color: 0x8b4513 });
+		g.stroke();
+	}
+
+	private drawStar(g: Graphics, cx: number, cy: number, size: number, points: number, color: number) {
+		const outerRadius = size;
+		const innerRadius = size / 2;
+
+		g.moveTo(cx, cy - outerRadius);
+		for (let i = 0; i < points * 2; i++) {
+			const radius = i % 2 === 0 ? outerRadius : innerRadius;
+			const angle = (Math.PI * i) / points - Math.PI / 2;
+			g.lineTo(cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius);
+		}
+		g.closePath();
+		g.fill({ color });
 	}
 
 	resize(width: number, height: number) {

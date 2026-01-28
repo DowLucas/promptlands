@@ -6,6 +6,7 @@
 	let canvas: HTMLCanvasElement;
 	let container: HTMLDivElement;
 	let renderer: GameRenderer | null = null;
+	let rendererReady = false;
 
 	onMount(() => {
 		let resizeObserver: ResizeObserver;
@@ -13,6 +14,7 @@
 		(async () => {
 			renderer = new GameRenderer();
 			await renderer.init(canvas);
+			rendererReady = true;
 
 			// Set up resize observer
 			resizeObserver = new ResizeObserver((entries) => {
@@ -22,6 +24,15 @@
 				}
 			});
 			resizeObserver.observe(container);
+
+			// Trigger initial render if state is already available
+			if ($gameState.world) {
+				renderer.setWorldSize($gameState.world.size);
+				renderer.setPlayerAgentId($gameState.playerAgentId);
+				renderer.updateTiles($gameState.world.tiles, $gameState.agents);
+				renderer.updateAgents($gameState.agents);
+				renderer.updateWorldObjects($gameState.worldObjects);
+			}
 		})();
 
 		return () => {
@@ -33,12 +44,13 @@
 		renderer?.destroy();
 	});
 
-	// React to game state changes
-	$: if (renderer && $gameState.world) {
+	// React to game state changes - only after renderer is ready
+	$: if (rendererReady && renderer && $gameState.world) {
 		renderer.setWorldSize($gameState.world.size);
 		renderer.setPlayerAgentId($gameState.playerAgentId);
 		renderer.updateTiles($gameState.world.tiles, $gameState.agents);
 		renderer.updateAgents($gameState.agents);
+		renderer.updateWorldObjects($gameState.worldObjects);
 	}
 </script>
 

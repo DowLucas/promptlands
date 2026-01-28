@@ -1,10 +1,10 @@
 import { writable, derived, type Writable } from 'svelte/store';
-import type { Agent, FullGameState, GameMessage, Tile, TickUpdate, WorldSnapshot, ActionResult } from '$lib/types';
+import type { Agent, FullGameState, GameMessage, Tile, TickUpdate, WorldSnapshot, ActionResult, WorldObject } from '$lib/types';
 
 // Log entries store
 export interface LogEntry {
 	tick: number;
-	type: 'move' | 'claim' | 'message' | 'wait' | 'info' | 'error';
+	type: 'move' | 'claim' | 'message' | 'wait' | 'info' | 'error' | 'combat' | 'item' | 'craft' | 'harvest' | 'interact' | 'upgrade' | 'death' | 'respawn';
 	agentId: string;
 	agentName: string;
 	text: string;
@@ -22,6 +22,7 @@ interface GameState {
 	agents: Agent[];
 	messages: GameMessage[];
 	playerAgentId: string | null;
+	worldObjects: WorldObject[];
 }
 
 const initialState: GameState = {
@@ -31,7 +32,8 @@ const initialState: GameState = {
 	world: null,
 	agents: [],
 	messages: [],
-	playerAgentId: null
+	playerAgentId: null,
+	worldObjects: []
 };
 
 export const gameState: Writable<GameState> = writable(initialState);
@@ -45,7 +47,8 @@ export function setFullState(state: FullGameState) {
 		tick: state.tick,
 		world: state.world,
 		agents: state.agents,
-		messages: state.messages
+		messages: state.messages,
+		worldObjects: state.world_objects || []
 	}));
 }
 
@@ -75,6 +78,20 @@ export function applyTickUpdate(update: TickUpdate) {
 		// Append new messages
 		const newMessages = [...s.messages, ...update.changes.messages];
 
+		// Update world objects
+		let newWorldObjects = [...s.worldObjects];
+
+		// Remove objects
+		if (update.changes.objects_removed) {
+			const removedIds = new Set(update.changes.objects_removed);
+			newWorldObjects = newWorldObjects.filter(obj => !removedIds.has(obj.id));
+		}
+
+		// Add new objects
+		if (update.changes.objects_added) {
+			newWorldObjects = [...newWorldObjects, ...update.changes.objects_added];
+		}
+
 		return {
 			...s,
 			tick: update.tick,
@@ -83,19 +100,32 @@ export function applyTickUpdate(update: TickUpdate) {
 				tiles: Array.from(tileMap.values())
 			},
 			agents: newAgents,
-			messages: newMessages
+			messages: newMessages,
+			worldObjects: newWorldObjects
 		};
 	});
 
 	// Add to game log
-	addToLog(update.tick, update.changes.results, update.changes.messages, currentState!);
+	addToLog(update.tick, update.changes.results, update.changes.messages, update.changes.respawned || [], currentState!);
 }
 
-function addToLog(tick: number, results: ActionResult[], messages: GameMessage[], state: GameState) {
+function addToLog(tick: number, results: ActionResult[], messages: GameMessage[], respawned: string[], state: GameState) {
 	const getAgentName = (id: string) => state.agents.find(a => a.id === id)?.name || 'Unknown';
 	const isPlayer = (id: string) => id === state.playerAgentId;
 
 	const newEntries: LogEntry[] = [];
+
+	// Process respawns
+	for (const agentId of respawned) {
+		newEntries.push({
+			tick,
+			type: 'respawn',
+			agentId,
+			agentName: getAgentName(agentId),
+			text: 'respawned',
+			isPlayer: isPlayer(agentId)
+		});
+	}
 
 	// Process action results
 	for (const result of results) {
@@ -123,8 +153,99 @@ function addToLog(tick: number, results: ActionResult[], messages: GameMessage[]
 				}
 				break;
 			case 'WAIT':
+			case 'HOLD':
 				type = 'wait';
 				text = 'is waiting...';
+				break;
+			case 'FIGHT':
+				type = 'combat';
+				if (result.success) {
+					text = result.message || `dealt ${result.damage_dealt} damage`;
+				} else {
+					type = 'error';
+					text = `failed to attack: ${result.message}`;
+				}
+				break;
+			case 'PICKUP':
+				type = 'item';
+				if (result.success) {
+					text = `picked up ${result.item_quantity || 1} ${result.item_id}`;
+				} else {
+					type = 'error';
+					text = `failed to pick up: ${result.message}`;
+				}
+				break;
+			case 'DROP':
+				type = 'item';
+				if (result.success) {
+					text = `dropped ${result.item_quantity || 1} ${result.item_id}`;
+				} else {
+					type = 'error';
+					text = `failed to drop: ${result.message}`;
+				}
+				break;
+			case 'USE':
+				type = 'item';
+				if (result.success) {
+					text = `used ${result.item_id}: ${result.message}`;
+				} else {
+					type = 'error';
+					text = `failed to use: ${result.message}`;
+				}
+				break;
+			case 'PLACE':
+				type = 'item';
+				if (result.success) {
+					text = `placed ${result.placed}`;
+				} else {
+					type = 'error';
+					text = `failed to place: ${result.message}`;
+				}
+				break;
+			case 'CRAFT':
+				type = 'craft';
+				if (result.success) {
+					text = `crafted ${result.item_quantity || 1} ${result.crafted}`;
+				} else {
+					type = 'error';
+					text = `failed to craft: ${result.message}`;
+				}
+				break;
+			case 'HARVEST':
+				type = 'harvest';
+				if (result.success) {
+					text = `harvested ${result.item_quantity || 1} ${result.harvested}`;
+				} else {
+					type = 'error';
+					text = `failed to harvest: ${result.message}`;
+				}
+				break;
+			case 'SCAN':
+				type = 'info';
+				if (result.success) {
+					text = 'scanned the area';
+				} else {
+					type = 'error';
+					text = `failed to scan: ${result.message}`;
+				}
+				break;
+			case 'INTERACT':
+				type = 'interact';
+				if (result.success) {
+					text = result.message || 'interacted with object';
+				} else {
+					type = 'error';
+					text = `failed to interact: ${result.message}`;
+				}
+				break;
+			case 'UPGRADE':
+				type = 'upgrade';
+				if (result.success) {
+					text = `upgraded ${result.upgraded} to level ${result.new_level}`;
+				} else {
+					type = 'error';
+					text = `failed to upgrade: ${result.message}`;
+				}
 				break;
 			case 'MESSAGE':
 				continue; // Handle below
@@ -171,6 +292,25 @@ export const currentTick = derived(gameState, $s => $s.tick);
 export const gameStatus = derived(gameState, $s => $s.status);
 export const agents = derived(gameState, $s => $s.agents);
 export const messages = derived(gameState, $s => $s.messages);
+export const worldObjects = derived(gameState, $s => $s.worldObjects);
+
+// Get world objects at a specific position
+export const objectsAtPosition = derived(gameState, $s => {
+	const map = new Map<string, WorldObject[]>();
+	for (const obj of $s.worldObjects) {
+		const key = `${obj.position.x},${obj.position.y}`;
+		const existing = map.get(key) || [];
+		existing.push(obj);
+		map.set(key, existing);
+	}
+	return map;
+});
+
+// Get player agent
+export const playerAgent = derived(gameState, $s => {
+	if (!$s.playerAgentId) return null;
+	return $s.agents.find(a => a.id === $s.playerAgentId) || null;
+});
 
 // Get tile ownership map for rendering
 export const tileOwnership = derived(gameState, $s => {

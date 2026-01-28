@@ -83,11 +83,13 @@ func (m *Manager) CreateSingleplayerGameWithSeed(playerPrompt string, adversaryT
 
 	// Add player agent
 	playerAgent := NewAgent(gameID, "Player", playerPrompt, positions[0], m.config.MaxMemoryItems)
+	playerAgent.InitInventory(engine.itemRegistry)
 	engine.agents[playerAgent.ID] = playerAgent
 
 	// Add adversary agents
 	for i, advType := range adversaryTypes {
 		adversary := NewAdversaryAgent(gameID, advType, positions[i+1], m.config.MaxMemoryItems)
+		adversary.InitInventory(engine.itemRegistry)
 		engine.agents[adversary.ID] = adversary
 	}
 
