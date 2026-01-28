@@ -4,11 +4,40 @@ server:
 
 game:
   tick_duration: 10s
-  map_size: 20
   max_players: 4
   vision_radius: 3
   max_memory_items: 10
   win_after_ticks: 100
+
+  # Map configuration
+  map:
+    # Map preset to use: default, infernal_realms, frozen_wastes,
+    # ancient_world, neon_wilderness, void_incursion, crystalline_expanse
+    preset: "default"
+
+    # Map size: tiny (32), small (64), medium (128), large (256), huge (512), massive (1024)
+    size: "large"
+
+    # Override size with a custom value (0 = use preset size)
+    custom_size: 0
+
+    # Seed for procedural generation (0 = random)
+    seed: 0
+
+    # Chunk size for world generation
+    chunk_size: 32
+
+    # Whether to enable fog of war
+    fog_of_war: true
+
+    # Whether respawning is enabled
+    respawn_enabled: true
+
+    # Resource density multiplier (1.0 = normal)
+    resource_density: 1.0
+
+    # Difficulty multiplier (affects enemy spawns, environmental damage)
+    difficulty_multiplier: 1.0
 
 llm:
   provider: gemini

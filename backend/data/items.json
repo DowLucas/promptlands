@@ -33,6 +33,390 @@
       "max_stack": 32
     },
     {
+      "id": "ancient_wood",
+      "name": "Ancient Wood",
+      "description": "Petrified timber from trees that have stood for millennia, infused with natural magic",
+      "category": "material",
+      "rarity": "uncommon",
+      "max_stack": 32
+    },
+    {
+      "id": "spirit_essence",
+      "name": "Spirit Essence",
+      "description": "Ethereal energy captured from forest spirits, used in powerful enchantments",
+      "category": "material",
+      "rarity": "rare",
+      "max_stack": 16
+    },
+    {
+      "id": "sand_glass",
+      "name": "Sand Glass",
+      "description": "Glass formed naturally in the scorching desert, shaped by intense heat",
+      "category": "material",
+      "rarity": "uncommon",
+      "max_stack": 32
+    },
+    {
+      "id": "cactus_fruit",
+      "name": "Cactus Fruit",
+      "description": "Nutritious fruit from desert cacti, provides sustenance in harsh conditions",
+      "category": "material",
+      "rarity": "uncommon",
+      "max_stack": 32
+    },
+    {
+      "id": "sun_crystal",
+      "name": "Sun Crystal",
+      "description": "Crystallized sunlight harvested from the desert, radiates warm energy",
+      "category": "material",
+      "rarity": "rare",
+      "max_stack": 16
+    },
+    {
+      "id": "obsite",
+      "name": "Obsite",
+      "description": "Volcanic obsidian infused with fire essence, extremely sharp and durable",
+      "category": "material",
+      "rarity": "uncommon",
+      "max_stack": 32
+    },
+    {
+      "id": "ember_ore",
+      "name": "Ember Ore",
+      "description": "Ore that burns eternally with inner fire, core component of fire-based crafting",
+      "category": "material",
+      "rarity": "uncommon",
+      "max_stack": 32
+    },
+    {
+      "id": "fire_crystal",
+      "name": "Fire Crystal",
+      "description": "Crystallized flame from volcanic vents, contains immense thermal energy",
+      "category": "material",
+      "rarity": "rare",
+      "max_stack": 16
+    },
+    {
+      "id": "magma_core",
+      "name": "Magma Core",
+      "description": "The solidified heart of a magma elemental, pulses with volcanic power",
+      "category": "material",
+      "rarity": "epic",
+      "max_stack": 8
+    },
+    {
+      "id": "phoenix_feather",
+      "name": "Phoenix Feather",
+      "description": "A feather from the legendary phoenix, grants resurrection power",
+      "category": "material",
+      "rarity": "legendary",
+      "max_stack": 4
+    },
+    {
+      "id": "frost_stone",
+      "name": "Frost Stone",
+      "description": "Stone frozen to absolute zero, never melts and radiates cold",
+      "category": "material",
+      "rarity": "uncommon",
+      "max_stack": 32
+    },
+    {
+      "id": "ice_crystal",
+      "name": "Ice Crystal",
+      "description": "Perfect crystal formed over centuries of frost, channels cold magic",
+      "category": "material",
+      "rarity": "rare",
+      "max_stack": 16
+    },
+    {
+      "id": "frozen_herb",
+      "name": "Frozen Herb",
+      "description": "Medicinal plant preserved in eternal ice, potent healing properties",
+      "category": "material",
+      "rarity": "uncommon",
+      "max_stack": 32
+    },
+    {
+      "id": "permafrost_core",
+      "name": "Permafrost Core",
+      "description": "The frozen heart of an ice elemental, maintains cryogenic temperatures",
+      "category": "material",
+      "rarity": "epic",
+      "max_stack": 8
+    },
+    {
+      "id": "temporal_ice",
+      "name": "Temporal Ice",
+      "description": "Ice that exists outside of time, can freeze moments themselves",
+      "category": "material",
+      "rarity": "legendary",
+      "max_stack": 4
+    },
+    {
+      "id": "ley_essence",
+      "name": "Ley Essence",
+      "description": "Pure magical energy drawn from ley line convergences in the savanna",
+      "category": "material",
+      "rarity": "rare",
+      "max_stack": 16
+    },
+    {
+      "id": "copper_ore",
+      "name": "Copper Ore",
+      "description": "Common metal ore found in the badlands, useful for basic crafting",
+      "category": "material",
+      "rarity": "uncommon",
+      "max_stack": 32
+    },
+    {
+      "id": "iron_ore",
+      "name": "Iron Ore",
+      "description": "Strong metal ore from badlands canyons, essential for weapons and armor",
+      "category": "material",
+      "rarity": "uncommon",
+      "max_stack": 32
+    },
+    {
+      "id": "gold_nugget",
+      "name": "Gold Nugget",
+      "description": "Precious metal found in badlands streams, valuable for trade and crafting",
+      "category": "material",
+      "rarity": "rare",
+      "max_stack": 16
+    },
+    {
+      "id": "shadow_moss",
+      "name": "Shadow Moss",
+      "description": "Dark moss that absorbs light, used in stealth enchantments",
+      "category": "material",
+      "rarity": "uncommon",
+      "max_stack": 32
+    },
+    {
+      "id": "dark_herb",
+      "name": "Dark Herb",
+      "description": "Poisonous plant from the swamps, base ingredient for toxins and debuffs",
+      "category": "material",
+      "rarity": "uncommon",
+      "max_stack": 32
+    },
+    {
+      "id": "nightmare_essence",
+      "name": "Nightmare Essence",
+      "description": "Condensed fear harvested from swamp nightmares, powerful in dark magic",
+      "category": "material",
+      "rarity": "rare",
+      "max_stack": 16
+    },
+    {
+      "id": "umbral_crystal",
+      "name": "Umbral Crystal",
+      "description": "Crystal formed from pure darkness, absorbs and redirects shadow energy",
+      "category": "material",
+      "rarity": "epic",
+      "max_stack": 8
+    },
+    {
+      "id": "shadow_heart",
+      "name": "Shadow Heart",
+      "description": "The core of a shadow entity, grants mastery over darkness",
+      "category": "material",
+      "rarity": "legendary",
+      "max_stack": 4
+    },
+    {
+      "id": "crystal_shard",
+      "name": "Crystal Shard",
+      "description": "Fragment of the great crystal spires, resonates with arcane frequencies",
+      "category": "material",
+      "rarity": "uncommon",
+      "max_stack": 32
+    },
+    {
+      "id": "resonant_crystal",
+      "name": "Resonant Crystal",
+      "description": "Crystal that amplifies magical energy, core component of enchanting",
+      "category": "material",
+      "rarity": "epic",
+      "max_stack": 8
+    },
+    {
+      "id": "harmonic_gem",
+      "name": "Harmonic Gem",
+      "description": "Perfect crystal that vibrates at reality's frequency, incredibly powerful",
+      "category": "material",
+      "rarity": "legendary",
+      "max_stack": 4
+    },
+    {
+      "id": "void_crystal",
+      "name": "Void Crystal",
+      "description": "Crystal from between dimensions, contains fragments of the void",
+      "category": "material",
+      "rarity": "mythic",
+      "max_stack": 2
+    },
+    {
+      "id": "void_shard",
+      "name": "Void Shard",
+      "description": "Fragment of void energy solidified into physical form",
+      "category": "material",
+      "rarity": "rare",
+      "max_stack": 16
+    },
+    {
+      "id": "null_stone",
+      "name": "Null Stone",
+      "description": "Stone that exists in a state of quantum uncertainty, disrupts reality",
+      "category": "material",
+      "rarity": "uncommon",
+      "max_stack": 32
+    },
+    {
+      "id": "reality_fragment",
+      "name": "Reality Fragment",
+      "description": "A piece of stable reality torn from the void, extremely valuable",
+      "category": "material",
+      "rarity": "epic",
+      "max_stack": 8
+    },
+    {
+      "id": "entropy_essence",
+      "name": "Entropy Essence",
+      "description": "Pure entropy extracted from void rifts, decays anything it touches",
+      "category": "material",
+      "rarity": "epic",
+      "max_stack": 8
+    },
+    {
+      "id": "void_heart",
+      "name": "Void Heart",
+      "description": "The impossible core of a void entity, warps reality around it",
+      "category": "material",
+      "rarity": "mythic",
+      "max_stack": 2
+    },
+    {
+      "id": "bio_luminescent",
+      "name": "Bio-Luminescent Gland",
+      "description": "Glowing organ from neon flora, provides light and bio-energy",
+      "category": "material",
+      "rarity": "uncommon",
+      "max_stack": 32
+    },
+    {
+      "id": "neon_sap",
+      "name": "Neon Sap",
+      "description": "Glowing sap from alien plants, used in healing and energy restoration",
+      "category": "material",
+      "rarity": "uncommon",
+      "max_stack": 32
+    },
+    {
+      "id": "alien_spore",
+      "name": "Alien Spore",
+      "description": "Spore from xenoflora, capable of rapid regeneration",
+      "category": "material",
+      "rarity": "rare",
+      "max_stack": 16
+    },
+    {
+      "id": "xenoflora_core",
+      "name": "Xenoflora Core",
+      "description": "Heart of an ancient alien plant, contains terraforming potential",
+      "category": "material",
+      "rarity": "epic",
+      "max_stack": 8
+    },
+    {
+      "id": "primal_genome",
+      "name": "Primal Genome",
+      "description": "Complete genetic template from before time, source of all life",
+      "category": "material",
+      "rarity": "legendary",
+      "max_stack": 4
+    },
+    {
+      "id": "plasma_cell",
+      "name": "Plasma Cell",
+      "description": "Contained plasma energy from the plasma fields, powers advanced tech",
+      "category": "material",
+      "rarity": "uncommon",
+      "max_stack": 32
+    },
+    {
+      "id": "energy_crystal",
+      "name": "Energy Crystal",
+      "description": "Crystal that stores and releases pure energy, essential for plasma tech",
+      "category": "material",
+      "rarity": "rare",
+      "max_stack": 16
+    },
+    {
+      "id": "conduit_shard",
+      "name": "Conduit Shard",
+      "description": "Fragment of ancient energy conduits, channels power efficiently",
+      "category": "material",
+      "rarity": "uncommon",
+      "max_stack": 32
+    },
+    {
+      "id": "fusion_core",
+      "name": "Fusion Core",
+      "description": "Miniature fusion reactor core, provides incredible power output",
+      "category": "material",
+      "rarity": "epic",
+      "max_stack": 8
+    },
+    {
+      "id": "antimatter_cell",
+      "name": "Antimatter Cell",
+      "description": "Contained antimatter from plasma storms, ultimate energy source",
+      "category": "material",
+      "rarity": "legendary",
+      "max_stack": 4
+    },
+    {
+      "id": "rune_stone",
+      "name": "Rune Stone",
+      "description": "Stone inscribed with ancient runes, foundation of runic magic",
+      "category": "material",
+      "rarity": "uncommon",
+      "max_stack": 32
+    },
+    {
+      "id": "arcane_dust",
+      "name": "Arcane Dust",
+      "description": "Residue from ancient magical artifacts, used in enchanting",
+      "category": "material",
+      "rarity": "uncommon",
+      "max_stack": 32
+    },
+    {
+      "id": "glyph_fragment",
+      "name": "Glyph Fragment",
+      "description": "Piece of an ancient spell glyph, contains partial magical knowledge",
+      "category": "material",
+      "rarity": "rare",
+      "max_stack": 16
+    },
+    {
+      "id": "ancient_rune",
+      "name": "Ancient Rune",
+      "description": "Complete rune from the old civilization, powerful enchanting component",
+      "category": "material",
+      "rarity": "epic",
+      "max_stack": 8
+    },
+    {
+      "id": "primordial_sigil",
+      "name": "Primordial Sigil",
+      "description": "Symbol of power from before history, grants command over fundamental forces",
+      "category": "material",
+      "rarity": "legendary",
+      "max_stack": 4
+    },
+    {
       "id": "wall",
       "name": "Stone Wall",
       "description": "A sturdy wall that blocks movement",
@@ -161,6 +545,73 @@
       "equippable": true,
       "properties": {
         "vision_bonus": 1,
+        "slot": "trinket"
+      }
+    },
+    {
+      "id": "fire_amulet",
+      "name": "Amulet of Flames",
+      "description": "Grants immunity to volcanic terrain damage",
+      "category": "equipment",
+      "rarity": "rare",
+      "max_stack": 1,
+      "equippable": true,
+      "properties": {
+        "fire_immune": true,
+        "slot": "trinket"
+      }
+    },
+    {
+      "id": "frost_cloak",
+      "name": "Frost Cloak",
+      "description": "Reduces movement cost in ice biomes",
+      "category": "equipment",
+      "rarity": "rare",
+      "max_stack": 1,
+      "equippable": true,
+      "properties": {
+        "ice_movement_bonus": 0.3,
+        "slot": "armor"
+      }
+    },
+    {
+      "id": "void_blade",
+      "name": "Void Blade",
+      "description": "A weapon forged from void crystals, deals extra damage",
+      "category": "equipment",
+      "rarity": "legendary",
+      "max_stack": 1,
+      "equippable": true,
+      "properties": {
+        "damage_bonus": 3,
+        "void_damage": 1,
+        "slot": "weapon"
+      }
+    },
+    {
+      "id": "phoenix_armor",
+      "name": "Phoenix Plate",
+      "description": "Armor that grants resurrection once per game",
+      "category": "equipment",
+      "rarity": "legendary",
+      "max_stack": 1,
+      "equippable": true,
+      "properties": {
+        "hp_bonus": 2,
+        "resurrection": true,
+        "slot": "armor"
+      }
+    },
+    {
+      "id": "temporal_ring",
+      "name": "Ring of Time",
+      "description": "Grants an extra action every other turn",
+      "category": "equipment",
+      "rarity": "legendary",
+      "max_stack": 1,
+      "equippable": true,
+      "properties": {
+        "bonus_action_interval": 2,
         "slot": "trinket"
       }
     }
