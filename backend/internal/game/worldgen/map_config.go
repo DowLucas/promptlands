@@ -70,6 +70,12 @@ type NoiseLayerConfig struct {
 	SeedOffset  int64   `json:"seed_offset"`
 }
 
+// FrequencyScaling controls automatic noise frequency adjustment based on map size
+type FrequencyScaling struct {
+	Enabled       bool `json:"enabled"`
+	ReferenceSize int  `json:"reference_size"` // Base size frequencies are tuned for (default: 512)
+}
+
 // StructureSpawnConfig defines how structures spawn in a map
 type StructureSpawnConfig struct {
 	ShrinesPerChunk   float64 `json:"shrines_per_chunk"`
@@ -116,6 +122,8 @@ type MapConfig struct {
 	RespawnEnabled       bool    `json:"respawn_enabled"`
 	FogOfWar             bool    `json:"fog_of_war"`
 	DifficultyMultiplier float64 `json:"difficulty_multiplier"`
+
+	FrequencyScaling FrequencyScaling `json:"frequency_scaling,omitempty"`
 }
 
 // GetActualSize returns the actual map size in tiles
@@ -136,6 +144,20 @@ func (c *MapConfig) GetChunkCount() int {
 	return (size + chunkSize - 1) / chunkSize
 }
 
+// GetEffectiveFrequency returns noise frequency adjusted for map size
+// This ensures biomes appear consistently sized across different map sizes
+func (c *MapConfig) GetEffectiveFrequency(baseFreq float64) float64 {
+	if !c.FrequencyScaling.Enabled {
+		return baseFreq
+	}
+	refSize := c.FrequencyScaling.ReferenceSize
+	if refSize <= 0 {
+		refSize = 512
+	}
+	actualSize := c.GetActualSize()
+	return baseFreq * (float64(refSize) / float64(actualSize))
+}
+
 // DefaultMapConfig returns a balanced default map configuration
 // Uses LOW frequency noise to create LARGE biome regions like the reference image
 // Large map size (2048x2048) creates pixelated aesthetic when zoomed out
@@ -148,34 +170,34 @@ func DefaultMapConfig() *MapConfig {
 		Size:        MapSizeHuge, // 2048x2048 for pixelated open world feel
 		ChunkSize:   32,
 
-		// LOW frequency = LARGE biome regions (like reference image)
-		// These values are tuned for 2048x2048 maps
+		// Moderate frequency = visible distinct regions without fragmentation
+		// NOT scaled - these frequencies work well at any map size
 		ElevationNoise: NoiseLayerConfig{
-			Octaves:     3,
-			Frequency:   0.0015, // Very low = massive elevation regions
+			Octaves:     2,
+			Frequency:   0.002, // Creates visible continent-scale regions
 			Persistence: 0.5,
 			Amplitude:   1.0,
 			SeedOffset:  0,
 		},
 		MoistureNoise: NoiseLayerConfig{
-			Octaves:     3,
-			Frequency:   0.002, // Low = large moisture zones
+			Octaves:     2,
+			Frequency:   0.0025, // Moisture zones
 			Persistence: 0.5,
 			Amplitude:   1.0,
 			SeedOffset:  1000,
 		},
 		TemperatureNoise: NoiseLayerConfig{
 			Octaves:     2,
-			Frequency:   0.0012, // Very low = huge temperature bands
-			Persistence: 0.6,
+			Frequency:   0.0015, // Temperature bands
+			Persistence: 0.5,
 			Amplitude:   1.0,
 			SeedOffset:  2000,
 		},
 		VariationNoise: NoiseLayerConfig{
-			Octaves:     2,
-			Frequency:   0.008, // Slight variation for organic edges
+			Octaves:     1,
+			Frequency:   0.001,
 			Persistence: 0.4,
-			Amplitude:   0.15,
+			Amplitude:   0.0, // Disabled - not used
 			SeedOffset:  3000,
 		},
 
@@ -200,22 +222,28 @@ func DefaultMapConfig() *MapConfig {
 		RespawnEnabled:       true,
 		FogOfWar:             true,
 		DifficultyMultiplier: 1.0,
+
+		FrequencyScaling: FrequencyScaling{
+			Enabled:       false, // Disabled - manual frequencies work at any map size
+			ReferenceSize: 512,
+		},
 	}
 }
 
 // DefaultBiomeDistributions returns biome distribution rules for large contiguous regions
-// Designed to create the distinct biome zones seen in the reference image
+// Uses non-overlapping "core" ranges to prevent biome fragmentation from noise variations
+// Elevation is primary separator, then temperature, then moisture
 func DefaultBiomeDistributions() []BiomeDistribution {
 	return []BiomeDistribution{
-		// === WATER (lowest elevation) ===
+		// === EXTREME ELEVATION (non-overlapping) ===
+		// Ocean: lowest elevation - exclusive
 		{
 			ElevationMin: 0.0, ElevationMax: 0.20,
 			MoistureMin: 0.0, MoistureMax: 1.0,
 			TemperatureMin: 0.0, TemperatureMax: 1.0,
 			Biome: BiomeOcean, Priority: 100,
 		},
-
-		// === MOUNTAINS (highest elevation) ===
+		// Mountain: highest elevation - exclusive
 		{
 			ElevationMin: 0.85, ElevationMax: 1.0,
 			MoistureMin: 0.0, MoistureMax: 1.0,
@@ -223,103 +251,101 @@ func DefaultBiomeDistributions() []BiomeDistribution {
 			Biome: BiomeMountain, Priority: 100,
 		},
 
-		// === ICE BIOME (cold temperature) ===
+		// === TEMPERATURE-BASED PRIMARY BIOMES (wide ranges) ===
+		// Ice: cold temperatures dominate
 		{
 			ElevationMin: 0.20, ElevationMax: 0.85,
 			MoistureMin: 0.0, MoistureMax: 1.0,
-			TemperatureMin: 0.0, TemperatureMax: 0.20,
-			Biome: BiomeIce, Priority: 90,
+			TemperatureMin: 0.0, TemperatureMax: 0.25,
+			Biome: BiomeIce, Priority: 95,
 		},
-
-		// === VOLCANIC (hot + high elevation) ===
+		// Volcanic: hot + high elevation
 		{
-			ElevationMin: 0.55, ElevationMax: 0.85,
-			MoistureMin: 0.0, MoistureMax: 0.50,
+			ElevationMin: 0.60, ElevationMax: 0.85,
+			MoistureMin: 0.0, MoistureMax: 0.40,
 			TemperatureMin: 0.75, TemperatureMax: 1.0,
-			Biome: BiomeVolcanic, Priority: 88,
+			Biome: BiomeVolcanic, Priority: 90,
 		},
-
-		// === DESERT (hot + dry) ===
+		// Desert: hot + dry + lower elevation
 		{
-			ElevationMin: 0.20, ElevationMax: 0.65,
-			MoistureMin: 0.0, MoistureMax: 0.30,
-			TemperatureMin: 0.60, TemperatureMax: 1.0,
+			ElevationMin: 0.20, ElevationMax: 0.50,
+			MoistureMin: 0.0, MoistureMax: 0.35,
+			TemperatureMin: 0.65, TemperatureMax: 1.0,
 			Biome: BiomeDesert, Priority: 85,
 		},
 
-		// === BADLANDS (warm + dry + mid elevation) ===
+		// === HIGH ELEVATION BIOMES ===
+		// Crystal: high elevation + cool/moderate temp
 		{
-			ElevationMin: 0.35, ElevationMax: 0.70,
-			MoistureMin: 0.0, MoistureMax: 0.35,
-			TemperatureMin: 0.50, TemperatureMax: 0.75,
-			Biome: BiomeBadlands, Priority: 82,
-		},
-
-		// === CRYSTAL (high elevation + moderate temp) ===
-		{
-			ElevationMin: 0.60, ElevationMax: 0.85,
-			MoistureMin: 0.30, MoistureMax: 0.70,
+			ElevationMin: 0.65, ElevationMax: 0.85,
+			MoistureMin: 0.0, MoistureMax: 1.0,
 			TemperatureMin: 0.25, TemperatureMax: 0.55,
 			Biome: BiomeCrystal, Priority: 80,
 		},
 
-		// === VOID (rare - extreme conditions) ===
+		// === WET BIOMES ===
+		// Swamp: low elevation + wet + moderate temp
 		{
-			ElevationMin: 0.50, ElevationMax: 0.75,
-			MoistureMin: 0.0, MoistureMax: 0.20,
-			TemperatureMin: 0.20, TemperatureMax: 0.40,
-			Biome: BiomeVoid, Priority: 78,
-		},
-
-		// === PLASMA (hot + mid moisture) ===
-		{
-			ElevationMin: 0.30, ElevationMax: 0.60,
-			MoistureMin: 0.20, MoistureMax: 0.50,
-			TemperatureMin: 0.70, TemperatureMax: 0.95,
-			Biome: BiomePlasma, Priority: 75,
-		},
-
-		// === NEON (hot + wet) ===
-		{
-			ElevationMin: 0.20, ElevationMax: 0.55,
-			MoistureMin: 0.65, MoistureMax: 1.0,
-			TemperatureMin: 0.65, TemperatureMax: 1.0,
-			Biome: BiomeNeon, Priority: 75,
-		},
-
-		// === SWAMP (low elevation + wet) ===
-		{
-			ElevationMin: 0.20, ElevationMax: 0.40,
+			ElevationMin: 0.20, ElevationMax: 0.35,
 			MoistureMin: 0.70, MoistureMax: 1.0,
 			TemperatureMin: 0.35, TemperatureMax: 0.65,
-			Biome: BiomeSwamp, Priority: 72,
+			Biome: BiomeSwamp, Priority: 75,
 		},
-
-		// === ANCIENT RUINS (mid temp + mid moisture + mid elevation) ===
+		// Forest: mid elevation + wet + moderate temp
 		{
-			ElevationMin: 0.40, ElevationMax: 0.65,
-			MoistureMin: 0.30, MoistureMax: 0.60,
-			TemperatureMin: 0.40, TemperatureMax: 0.65,
-			Biome: BiomeAncient, Priority: 70,
+			ElevationMin: 0.35, ElevationMax: 0.65,
+			MoistureMin: 0.55, MoistureMax: 1.0,
+			TemperatureMin: 0.30, TemperatureMax: 0.60,
+			Biome: BiomeForest, Priority: 70,
 		},
 
-		// === FOREST (wet + moderate temp) ===
+		// === DRY BIOMES ===
+		// Badlands: mid elevation + dry + warm
+		{
+			ElevationMin: 0.35, ElevationMax: 0.60,
+			MoistureMin: 0.0, MoistureMax: 0.40,
+			TemperatureMin: 0.55, TemperatureMax: 0.75,
+			Biome: BiomeBadlands, Priority: 65,
+		},
+
+		// === SPECIAL BIOMES (more specific conditions) ===
+		// Ancient: centered mid-range conditions
+		{
+			ElevationMin: 0.45, ElevationMax: 0.65,
+			MoistureMin: 0.35, MoistureMax: 0.55,
+			TemperatureMin: 0.40, TemperatureMax: 0.60,
+			Biome: BiomeAncient, Priority: 60,
+		},
+		// Neon: hot + wet
+		{
+			ElevationMin: 0.20, ElevationMax: 0.45,
+			MoistureMin: 0.60, MoistureMax: 1.0,
+			TemperatureMin: 0.70, TemperatureMax: 1.0,
+			Biome: BiomeNeon, Priority: 55,
+		},
+		// Plasma: hot + mid moisture
+		{
+			ElevationMin: 0.35, ElevationMax: 0.55,
+			MoistureMin: 0.25, MoistureMax: 0.55,
+			TemperatureMin: 0.65, TemperatureMax: 0.90,
+			Biome: BiomePlasma, Priority: 50,
+		},
+		// Void: cold + dry + mid-high elevation (rare)
+		{
+			ElevationMin: 0.50, ElevationMax: 0.70,
+			MoistureMin: 0.0, MoistureMax: 0.25,
+			TemperatureMin: 0.15, TemperatureMax: 0.35,
+			Biome: BiomeVoid, Priority: 45,
+		},
+
+		// === FALLBACK (fills remaining space) ===
 		{
 			ElevationMin: 0.20, ElevationMax: 0.70,
-			MoistureMin: 0.50, MoistureMax: 1.0,
-			TemperatureMin: 0.30, TemperatureMax: 0.65,
-			Biome: BiomeForest, Priority: 65,
-		},
-
-		// === SAVANNA (moderate everything - fills remaining space) ===
-		{
-			ElevationMin: 0.20, ElevationMax: 0.70,
-			MoistureMin: 0.25, MoistureMax: 0.65,
+			MoistureMin: 0.25, MoistureMax: 0.55,
 			TemperatureMin: 0.35, TemperatureMax: 0.70,
-			Biome: BiomeSavanna, Priority: 50,
+			Biome: BiomeSavanna, Priority: 10,
 		},
-
-		// === FALLBACK (savanna for anything not matched) ===
+		// Ultimate fallback
 		{
 			ElevationMin: 0.0, ElevationMax: 1.0,
 			MoistureMin: 0.0, MoistureMax: 1.0,

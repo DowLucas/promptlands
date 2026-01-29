@@ -27,6 +27,7 @@ type Tile struct {
 	Position Position    `json:"position"`
 	OwnerID  *uuid.UUID  `json:"owner_id,omitempty"`
 	Terrain  TerrainType `json:"terrain"`
+	Biome    string      `json:"biome,omitempty"`
 }
 
 // World manages the game map state
@@ -48,6 +49,7 @@ func NewWorld(size int) *World {
 				Position: Position{X: x, Y: y},
 				OwnerID:  nil,
 				Terrain:  TerrainPlains,
+				Biome:    "savanna",
 			}
 		}
 	}
@@ -118,15 +120,19 @@ func (w *World) SetOwner(pos Position, ownerID *uuid.UUID) bool {
 	return true
 }
 
-// GetVisibleTiles returns all tiles visible from a position within the given radius
+// GetVisibleTiles returns all tiles visible from a position within the given radius (circular).
 func (w *World) GetVisibleTiles(center Position, radius int) []*Tile {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
 
 	var visible []*Tile
+	r2 := radius * radius
 
 	for dy := -radius; dy <= radius; dy++ {
 		for dx := -radius; dx <= radius; dx++ {
+			if dx*dx+dy*dy > r2 {
+				continue
+			}
 			pos := Position{X: center.X + dx, Y: center.Y + dy}
 			if w.isValidPosition(pos) {
 				visible = append(visible, w.tiles[pos.Y][pos.X])
@@ -219,6 +225,7 @@ func (w *World) Snapshot() WorldSnapshot {
 				Y:       t.Position.Y,
 				OwnerID: t.OwnerID,
 				Terrain: t.Terrain,
+				Biome:   t.Biome,
 			})
 		}
 	}
@@ -243,4 +250,5 @@ type TileSnapshot struct {
 	Y       int         `json:"y"`
 	OwnerID *uuid.UUID  `json:"owner_id,omitempty"`
 	Terrain TerrainType `json:"terrain"`
+	Biome   string      `json:"biome,omitempty"`
 }

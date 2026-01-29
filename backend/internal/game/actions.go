@@ -12,21 +12,19 @@ import (
 type ActionType string
 
 const (
-	ActionMove     ActionType = "MOVE"
-	ActionClaim    ActionType = "CLAIM"
-	ActionMessage  ActionType = "MESSAGE"
-	ActionWait     ActionType = "WAIT"
-	ActionHold     ActionType = "HOLD"
-	ActionFight    ActionType = "FIGHT"
-	ActionPickup   ActionType = "PICKUP"
-	ActionDrop     ActionType = "DROP"
-	ActionUse      ActionType = "USE"
-	ActionPlace    ActionType = "PLACE"
-	ActionCraft    ActionType = "CRAFT"
-	ActionHarvest  ActionType = "HARVEST"
-	ActionScan     ActionType = "SCAN"
+	ActionMove    ActionType = "MOVE"
+	ActionClaim   ActionType = "CLAIM"
+	ActionMessage ActionType = "MESSAGE"
+	ActionWait    ActionType = "WAIT"
+	ActionFight   ActionType = "FIGHT"
+	ActionPickup  ActionType = "PICKUP"
+	ActionUse     ActionType = "USE"
+	ActionHarvest ActionType = "HARVEST"
+	ActionUpgrade ActionType = "UPGRADE"
+	ActionBuy     ActionType = "BUY"
+
+	// ActionInteract is used internally for auto-activation results (not a player action)
 	ActionInteract ActionType = "INTERACT"
-	ActionUpgrade  ActionType = "UPGRADE"
 )
 
 // Direction represents a movement direction
@@ -41,22 +39,21 @@ const (
 
 // Action represents an agent's action for a tick
 type Action struct {
-	Type       ActionType `json:"action"`
-	AgentID    uuid.UUID  `json:"agent_id"`
+	Type       ActionType   `json:"action"`
+	AgentID    uuid.UUID    `json:"agent_id"`
 	Params     ActionParams `json:"params,omitempty"`
-	ReceivedAt time.Time  `json:"-"`
+	Reasoning  string       `json:"reasoning,omitempty"`
+	ReceivedAt time.Time    `json:"-"`
 }
 
 // ActionParams holds the parameters for different action types
 type ActionParams struct {
 	Direction   Direction  `json:"direction,omitempty"`    // For MOVE
+	Steps       int        `json:"steps,omitempty"`        // For MOVE: number of steps (0 = use max)
 	Target      *uuid.UUID `json:"target,omitempty"`       // For MESSAGE (nil = broadcast), FIGHT
-	Message     string     `json:"message,omitempty"`      // For MESSAGE, INTERACT (obelisk)
-	ItemID      string     `json:"item_id,omitempty"`      // For USE, PLACE, DROP
-	SlotIndex   *int       `json:"slot_index,omitempty"`   // Alternative to ItemID for slot-based ops
-	Quantity    int        `json:"quantity,omitempty"`     // For DROP
-	RecipeID    string     `json:"recipe_id,omitempty"`    // For CRAFT
-	UpgradeType string     `json:"upgrade_type,omitempty"` // For UPGRADE: vision, memory, strength, storage
+	Message     string     `json:"message,omitempty"`      // For MESSAGE
+	ItemID      string     `json:"item_id,omitempty"`      // For USE
+	UpgradeType string     `json:"upgrade_type,omitempty"` // For UPGRADE: vision, memory, strength, storage, speed, claim
 }
 
 // WaitAction returns a default wait action
@@ -94,14 +91,6 @@ func MessageAction(agentID uuid.UUID, target *uuid.UUID, message string) Action 
 	}
 }
 
-// HoldAction creates a hold action (stay in place)
-func HoldAction(agentID uuid.UUID) Action {
-	return Action{
-		Type:    ActionHold,
-		AgentID: agentID,
-	}
-}
-
 // FightAction creates a fight action
 func FightAction(agentID uuid.UUID, target uuid.UUID) Action {
 	return Action{
@@ -119,15 +108,6 @@ func PickupAction(agentID uuid.UUID) Action {
 	}
 }
 
-// DropAction creates a drop action
-func DropAction(agentID uuid.UUID, itemID string, quantity int) Action {
-	return Action{
-		Type:    ActionDrop,
-		AgentID: agentID,
-		Params:  ActionParams{ItemID: itemID, Quantity: quantity},
-	}
-}
-
 // UseAction creates a use action
 func UseAction(agentID uuid.UUID, itemID string) Action {
 	return Action{
@@ -137,46 +117,11 @@ func UseAction(agentID uuid.UUID, itemID string) Action {
 	}
 }
 
-// PlaceAction creates a place action
-func PlaceAction(agentID uuid.UUID, itemID string) Action {
-	return Action{
-		Type:    ActionPlace,
-		AgentID: agentID,
-		Params:  ActionParams{ItemID: itemID},
-	}
-}
-
-// CraftAction creates a craft action
-func CraftAction(agentID uuid.UUID, recipeID string) Action {
-	return Action{
-		Type:    ActionCraft,
-		AgentID: agentID,
-		Params:  ActionParams{RecipeID: recipeID},
-	}
-}
-
 // HarvestAction creates a harvest action
 func HarvestAction(agentID uuid.UUID) Action {
 	return Action{
 		Type:    ActionHarvest,
 		AgentID: agentID,
-	}
-}
-
-// ScanAction creates a scan action
-func ScanAction(agentID uuid.UUID) Action {
-	return Action{
-		Type:    ActionScan,
-		AgentID: agentID,
-	}
-}
-
-// InteractAction creates an interact action
-func InteractAction(agentID uuid.UUID, message string) Action {
-	return Action{
-		Type:    ActionInteract,
-		AgentID: agentID,
-		Params:  ActionParams{Message: message},
 	}
 }
 
@@ -189,17 +134,26 @@ func UpgradeAction(agentID uuid.UUID, upgradeType string) Action {
 	}
 }
 
+// BuyAction creates a buy action
+func BuyAction(agentID uuid.UUID, itemID string) Action {
+	return Action{
+		Type:    ActionBuy,
+		AgentID: agentID,
+		Params:  ActionParams{ItemID: itemID},
+	}
+}
+
 // ParseAction parses a JSON action from LLM response
 func ParseAction(agentID uuid.UUID, data []byte) (Action, error) {
 	var raw struct {
 		Action      string `json:"action"`
 		Direction   string `json:"direction,omitempty"`
+		Steps       int    `json:"steps,omitempty"`
 		Target      string `json:"target,omitempty"`
 		Message     string `json:"message,omitempty"`
 		ItemID      string `json:"item_id,omitempty"`
-		Quantity    int    `json:"quantity,omitempty"`
-		RecipeID    string `json:"recipe_id,omitempty"`
 		UpgradeType string `json:"upgrade_type,omitempty"`
+		Reasoning   string `json:"reasoning,omitempty"`
 	}
 
 	if err := json.Unmarshal(data, &raw); err != nil {
@@ -208,10 +162,20 @@ func ParseAction(agentID uuid.UUID, data []byte) (Action, error) {
 
 	action := Action{
 		AgentID:    agentID,
+		Reasoning:  raw.Reasoning,
 		ReceivedAt: time.Now(),
 	}
 
-	switch ActionType(raw.Action) {
+	// Backwards compatibility: map removed actions to their replacements
+	actionType := ActionType(raw.Action)
+	switch actionType {
+	case "HOLD":
+		actionType = ActionWait
+	case "PLACE":
+		actionType = ActionUse
+	}
+
+	switch actionType {
 	case ActionMove:
 		action.Type = ActionMove
 		dir := Direction(raw.Direction)
@@ -219,6 +183,7 @@ func ParseAction(agentID uuid.UUID, data []byte) (Action, error) {
 			return WaitAction(agentID), fmt.Errorf("invalid direction: %s", raw.Direction)
 		}
 		action.Params.Direction = dir
+		action.Params.Steps = raw.Steps
 
 	case ActionClaim:
 		action.Type = ActionClaim
@@ -239,9 +204,6 @@ func ParseAction(agentID uuid.UUID, data []byte) (Action, error) {
 	case ActionWait:
 		action.Type = ActionWait
 
-	case ActionHold:
-		action.Type = ActionHold
-
 	case ActionFight:
 		action.Type = ActionFight
 		if raw.Target == "" {
@@ -256,17 +218,6 @@ func ParseAction(agentID uuid.UUID, data []byte) (Action, error) {
 	case ActionPickup:
 		action.Type = ActionPickup
 
-	case ActionDrop:
-		action.Type = ActionDrop
-		if raw.ItemID == "" {
-			return WaitAction(agentID), fmt.Errorf("DROP requires item_id")
-		}
-		action.Params.ItemID = raw.ItemID
-		action.Params.Quantity = raw.Quantity
-		if action.Params.Quantity <= 0 {
-			action.Params.Quantity = 1
-		}
-
 	case ActionUse:
 		action.Type = ActionUse
 		if raw.ItemID == "" {
@@ -274,29 +225,8 @@ func ParseAction(agentID uuid.UUID, data []byte) (Action, error) {
 		}
 		action.Params.ItemID = raw.ItemID
 
-	case ActionPlace:
-		action.Type = ActionPlace
-		if raw.ItemID == "" {
-			return WaitAction(agentID), fmt.Errorf("PLACE requires item_id")
-		}
-		action.Params.ItemID = raw.ItemID
-
-	case ActionCraft:
-		action.Type = ActionCraft
-		if raw.RecipeID == "" {
-			return WaitAction(agentID), fmt.Errorf("CRAFT requires recipe_id")
-		}
-		action.Params.RecipeID = raw.RecipeID
-
 	case ActionHarvest:
 		action.Type = ActionHarvest
-
-	case ActionScan:
-		action.Type = ActionScan
-
-	case ActionInteract:
-		action.Type = ActionInteract
-		action.Params.Message = raw.Message
 
 	case ActionUpgrade:
 		action.Type = ActionUpgrade
@@ -304,6 +234,13 @@ func ParseAction(agentID uuid.UUID, data []byte) (Action, error) {
 			return WaitAction(agentID), fmt.Errorf("UPGRADE requires upgrade_type")
 		}
 		action.Params.UpgradeType = raw.UpgradeType
+
+	case ActionBuy:
+		action.Type = ActionBuy
+		if raw.ItemID == "" {
+			return WaitAction(agentID), fmt.Errorf("BUY requires item_id")
+		}
+		action.Params.ItemID = raw.ItemID
 
 	default:
 		return WaitAction(agentID), fmt.Errorf("unknown action: %s", raw.Action)
@@ -344,15 +281,16 @@ type ActionResult struct {
 	Action       ActionType `json:"action"`
 	Success      bool       `json:"success"`
 	Message      string     `json:"message,omitempty"`
+	Reasoning    string     `json:"reasoning,omitempty"`
 	OldPos       *Position  `json:"old_pos,omitempty"`
 	NewPos       *Position  `json:"new_pos,omitempty"`
 	ClaimedAt    *Position  `json:"claimed_at,omitempty"`
+	ClaimedTiles []Position `json:"-"`                       // All tiles claimed (not serialized to client)
 	TargetID     *uuid.UUID `json:"target_id,omitempty"`     // For FIGHT
 	DamageDealt  int        `json:"damage_dealt,omitempty"`  // For FIGHT
 	ItemID       string     `json:"item_id,omitempty"`       // For item-related actions
-	ItemQuantity int        `json:"item_quantity,omitempty"` // For DROP, HARVEST, CRAFT
+	ItemQuantity int        `json:"item_quantity,omitempty"` // For HARVEST, PICKUP
 	Harvested    string     `json:"harvested,omitempty"`     // Resource type harvested
-	Crafted      string     `json:"crafted,omitempty"`       // Item crafted
 	Placed       string     `json:"placed,omitempty"`        // Structure placed
 	Upgraded     string     `json:"upgraded,omitempty"`      // Upgrade type
 	NewLevel     int        `json:"new_level,omitempty"`     // New upgrade level

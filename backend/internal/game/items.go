@@ -340,6 +340,7 @@ func DefaultItemRegistry() *ItemRegistry {
 		Consumable: true,
 		Properties: map[string]any{
 			"heal_amount": 1,
+			"coin_cost":   5,
 		},
 	})
 	r.Register(&ItemDefinition{
@@ -352,6 +353,51 @@ func DefaultItemRegistry() *ItemRegistry {
 		Consumable: true,
 		Properties: map[string]any{
 			"energy_amount": 20,
+			"coin_cost":     8,
+		},
+	})
+
+	// Equipment (buyable)
+	r.Register(&ItemDefinition{
+		ID:         "sword",
+		Name:       "Sword",
+		Category:   CategoryEquipment,
+		Rarity:     RarityUncommon,
+		MaxStack:   1,
+		Equippable: true,
+		Usable:     true,
+		Properties: map[string]any{
+			"damage_bonus": 1,
+			"equip_slot":   "weapon",
+			"coin_cost":    15,
+		},
+	})
+	r.Register(&ItemDefinition{
+		ID:         "armor",
+		Name:       "Armor",
+		Category:   CategoryEquipment,
+		Rarity:     RarityUncommon,
+		MaxStack:   1,
+		Equippable: true,
+		Usable:     true,
+		Properties: map[string]any{
+			"defense_bonus": 1,
+			"equip_slot":    "armor",
+			"coin_cost":     15,
+		},
+	})
+	r.Register(&ItemDefinition{
+		ID:         "scout_ring",
+		Name:       "Scout Ring",
+		Category:   CategoryEquipment,
+		Rarity:     RarityRare,
+		MaxStack:   1,
+		Equippable: true,
+		Usable:     true,
+		Properties: map[string]any{
+			"vision_bonus": 1,
+			"equip_slot":   "trinket",
+			"coin_cost":    20,
 		},
 	})
 

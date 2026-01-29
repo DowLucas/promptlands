@@ -36,14 +36,20 @@ func buildPrompt(ctx game.AgentContext) string {
 	sb.WriteString(fmt.Sprintf("Position: (%d, %d)\n", pos.X, pos.Y))
 	sb.WriteString(fmt.Sprintf("HP: %d/%d\n", ctx.Agent.GetHP(), ctx.Agent.MaxHP))
 	sb.WriteString(fmt.Sprintf("Energy: %d/%d (+%d/tick from %d owned tiles)\n", ctx.Agent.GetEnergy(), ctx.Agent.MaxEnergy, ctx.EnergyPerTick, ctx.OwnedCount))
+	sb.WriteString(fmt.Sprintf("Coins: %d\n", ctx.Agent.GetCoins()))
 	sb.WriteString(fmt.Sprintf("World size: %dx%d\n", ctx.WorldSize, ctx.WorldSize))
 	sb.WriteString(fmt.Sprintf("Tick: %d\n", ctx.CurrentTick))
 
 	// Upgrades
-	sb.WriteString(fmt.Sprintf("Upgrades: Vision %d, Memory %d, Strength %d, Storage %d\n",
-		ctx.Agent.VisionLevel, ctx.Agent.MemoryLevel, ctx.Agent.StrengthLevel, ctx.Agent.StorageLevel))
+	sb.WriteString(fmt.Sprintf("Upgrades: Vision %d, Memory %d, Strength %d, Storage %d, Speed %d, Claim %d\n",
+		ctx.Agent.VisionLevel, ctx.Agent.MemoryLevel, ctx.Agent.StrengthLevel, ctx.Agent.StorageLevel,
+		ctx.Agent.SpeedLevel, ctx.Agent.ClaimLevel))
+	sb.WriteString(fmt.Sprintf("Move speed: %d tiles | Claim radius: %d tiles\n", ctx.MoveSpeed, ctx.ClaimRadius))
 
-	// Tell agent about their current tile
+	// Tell agent about their current tile and biome
+	if ctx.CurrentBiome != "" {
+		sb.WriteString(fmt.Sprintf("Current biome: %s\n", ctx.CurrentBiome))
+	}
 	if ctx.CurrentTileOwned {
 		sb.WriteString("Current tile: YOU OWN THIS TILE\n")
 	} else if ctx.CurrentTileEnemy {
@@ -81,6 +87,26 @@ func buildPrompt(ctx game.AgentContext) string {
 			}
 		}
 		sb.WriteString("\n")
+	}
+
+	// Equipment
+	if ctx.Agent.Inventory != nil {
+		weapon := ctx.Agent.Inventory.GetEquipped(game.SlotWeapon)
+		armor := ctx.Agent.Inventory.GetEquipped(game.SlotArmor)
+		trinket := ctx.Agent.Inventory.GetEquipped(game.SlotTrinket)
+		if weapon != nil || armor != nil || trinket != nil {
+			sb.WriteString("[Equipment]\n")
+			if weapon != nil {
+				sb.WriteString(fmt.Sprintf("- Weapon: %s\n", weapon.DefinitionID))
+			}
+			if armor != nil {
+				sb.WriteString(fmt.Sprintf("- Armor: %s\n", armor.DefinitionID))
+			}
+			if trinket != nil {
+				sb.WriteString(fmt.Sprintf("- Trinket: %s\n", trinket.DefinitionID))
+			}
+			sb.WriteString("\n")
+		}
 	}
 
 	// Memory
@@ -132,50 +158,50 @@ func buildPrompt(ctx game.AgentContext) string {
 
 	// Available actions
 	sb.WriteString("[Available Actions]\n")
-	sb.WriteString("- MOVE <direction>: Move one tile (north/south/east/west)\n")
-	sb.WriteString("- HOLD: Stay in place\n")
-	sb.WriteString("- CLAIM: Claim the tile you're on\n")
-	sb.WriteString("- FIGHT <target>: Attack adjacent agent (1+strength damage)\n")
+	sb.WriteString(fmt.Sprintf("- MOVE <direction> [steps?]: Move up to %d tiles in a direction (north/south/east/west). Stops at obstacles. Default: max steps.\n", ctx.MoveSpeed))
+	sb.WriteString("- WAIT: Stay in place and do nothing\n")
+	sb.WriteString(fmt.Sprintf("- CLAIM: Claim all tiles within radius %d around you\n", ctx.ClaimRadius))
+	sb.WriteString("- FIGHT <target>: Attack adjacent agent (1+strength+weapon damage, reduced by target armor)\n")
 	sb.WriteString("- PICKUP: Pick up dropped item at your position\n")
-	sb.WriteString("- DROP <item_id> <quantity>: Drop item from inventory\n")
-	sb.WriteString("- USE <item_id>: Use consumable item\n")
-	sb.WriteString("- PLACE <item_id>: Build structure (costs energy)\n")
-	sb.WriteString("- CRAFT <recipe_id>: Craft item from materials\n")
-	sb.WriteString("- HARVEST: Gather from resource node at your position\n")
-	sb.WriteString("- SCAN: Extended vision this turn (costs 2 energy)\n")
-	sb.WriteString("- INTERACT <message?>: Use shrine/portal/cache/obelisk\n")
-	sb.WriteString("- UPGRADE <type>: Upgrade vision/memory/strength/storage\n")
+	sb.WriteString("- USE <item_id>: Use an item from inventory (potions heal/restore, structures are placed at your position)\n")
+	sb.WriteString("- HARVEST: Gather from resource node at your position (resources spawn naturally in biomes each tick)\n")
+	sb.WriteString("- UPGRADE <type>: Upgrade vision/memory/strength/storage/speed/claim\n")
+	sb.WriteString("- BUY <item_id>: Buy items with coins (sword/15, armor/15, scout_ring/20, health_potion/5, energy_potion/8)\n")
 	sb.WriteString("- MESSAGE <target?> <text>: Send message (null target = broadcast)\n")
+	sb.WriteString("Note: Shrines, caches, and portals activate automatically when you step on them.\n")
+	sb.WriteString("Note: Resources spawn naturally each tick across the map. Rarer biomes (Crystal, Void, Neon) produce resources more frequently.\n")
 	sb.WriteString("\n")
 
 	// Upgrade costs
 	sb.WriteString("[Upgrade Costs]\n")
 	sb.WriteString("Level 1→2: 10 energy | 2→3: 20 | 3→4: 35 | 4→5: 55\n")
-	sb.WriteString("Vision/Memory: max level 5 | Strength/Storage: max level 3\n")
+	sb.WriteString("Vision/Memory: max level 5 | Strength/Storage/Speed/Claim: max level 3\n")
 	sb.WriteString("\n")
 
 	// Response format
 	sb.WriteString("[Response Format]\n")
 	sb.WriteString("Respond with valid JSON:\n")
 	sb.WriteString("{\n")
+	sb.WriteString("  \"reasoning\": \"...\",     // 1-2 sentences explaining your thinking\n")
 	sb.WriteString("  \"action\": \"ACTION_TYPE\",\n")
 	sb.WriteString("  \"direction\": \"...\",     // MOVE only\n")
+	sb.WriteString("  \"steps\": 2,            // MOVE only (optional, default: max)\n")
 	sb.WriteString("  \"target\": \"agent-id\",   // FIGHT, MESSAGE\n")
-	sb.WriteString("  \"item_id\": \"...\",       // USE, PLACE, DROP\n")
-	sb.WriteString("  \"quantity\": 1,          // DROP\n")
-	sb.WriteString("  \"recipe_id\": \"...\",     // CRAFT\n")
+	sb.WriteString("  \"item_id\": \"...\",       // USE, BUY\n")
 	sb.WriteString("  \"upgrade_type\": \"...\",  // UPGRADE\n")
-	sb.WriteString("  \"message\": \"...\"        // MESSAGE, INTERACT\n")
+	sb.WriteString("  \"message\": \"...\"        // MESSAGE\n")
 	sb.WriteString("}\n\n")
 
 	sb.WriteString("Examples:\n")
-	sb.WriteString(`{"action": "MOVE", "direction": "north"}` + "\n")
-	sb.WriteString(`{"action": "CLAIM"}` + "\n")
-	sb.WriteString(`{"action": "FIGHT", "target": "agent-uuid"}` + "\n")
-	sb.WriteString(`{"action": "HARVEST"}` + "\n")
-	sb.WriteString(`{"action": "CRAFT", "recipe_id": "craft_wall"}` + "\n")
-	sb.WriteString(`{"action": "USE", "item_id": "health_potion"}` + "\n")
-	sb.WriteString(`{"action": "UPGRADE", "upgrade_type": "vision"}` + "\n")
+	sb.WriteString(`{"reasoning": "Moving north to explore unclaimed territory", "action": "MOVE", "direction": "north"}` + "\n")
+	sb.WriteString(`{"reasoning": "Heading east cautiously", "action": "MOVE", "direction": "east", "steps": 2}` + "\n")
+	sb.WriteString(`{"reasoning": "Securing territory around my position", "action": "CLAIM"}` + "\n")
+	sb.WriteString(`{"reasoning": "Enemy is adjacent and weak", "action": "FIGHT", "target": "agent-uuid"}` + "\n")
+	sb.WriteString(`{"reasoning": "Resource node here, gathering materials", "action": "HARVEST"}` + "\n")
+	sb.WriteString(`{"reasoning": "Low HP, need healing", "action": "USE", "item_id": "health_potion"}` + "\n")
+	sb.WriteString(`{"reasoning": "Building a wall defense", "action": "USE", "item_id": "wall"}` + "\n")
+	sb.WriteString(`{"reasoning": "Expanding vision range for better scouting", "action": "UPGRADE", "upgrade_type": "vision"}` + "\n")
+	sb.WriteString(`{"reasoning": "Buying a sword for combat advantage", "action": "BUY", "item_id": "sword"}` + "\n")
 	sb.WriteString("\n")
 
 	sb.WriteString("Choose your action:")
@@ -254,7 +280,7 @@ func formatVisibleWorld(tiles []*game.Tile, agentPos game.Position, agentID uuid
 	}
 
 	var sb strings.Builder
-	sb.WriteString("Legend: @ = you, O = your tile, X = enemy tile, . = unclaimed, # = obstacle\n")
+	sb.WriteString("Legend: @ = you, O = your tile, X = enemy tile, . = unclaimed, ~ = water, ^ = mountain\n")
 	sb.WriteString(fmt.Sprintf("Coordinates shown for (%d,%d) to (%d,%d)\n\n", minX, minY, maxX, maxY))
 
 	// Build grid
@@ -274,10 +300,13 @@ func formatVisibleWorld(tiles []*game.Tile, agentPos game.Position, agentID uuid
 				continue
 			}
 
-			// Check terrain
+			// Check terrain type for display
 			switch tile.Terrain {
-			case game.TerrainWater, game.TerrainMountain:
-				sb.WriteString("# ")
+			case game.TerrainWater:
+				sb.WriteString("~ ")
+				continue
+			case game.TerrainMountain:
+				sb.WriteString("^ ")
 				continue
 			}
 

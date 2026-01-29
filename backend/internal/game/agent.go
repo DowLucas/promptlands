@@ -1,9 +1,11 @@
 package game
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/google/uuid"
+	"github.com/lucas/promptlands/internal/config"
 )
 
 // Agent represents a player's AI agent in the game
@@ -26,22 +28,31 @@ type Agent struct {
 	Energy    int `json:"energy"`
 	MaxEnergy int `json:"max_energy"`
 
+	// Currency
+	Coins int `json:"coins"`
+
 	// Inventory
 	Inventory *Inventory `json:"-"`
 
-	// Upgrade levels (1-5 for vision/memory, 1-3 for strength/storage)
+	// Upgrade levels (1-5 for vision/memory, 1-3 for strength/storage/speed/claim)
 	VisionLevel   int `json:"vision_level"`
 	MemoryLevel   int `json:"memory_level"`
 	StrengthLevel int `json:"strength_level"`
 	StorageLevel  int `json:"storage_level"`
+	SpeedLevel    int `json:"speed_level"`
+	ClaimLevel    int `json:"claim_level"`
 
 	// Death & Respawn
 	IsDead      bool `json:"is_dead"`
 	DeathTick   int  `json:"death_tick,omitempty"`
 	RespawnTick int  `json:"respawn_tick,omitempty"`
+
+	// Fog of War - tiles the agent has seen (for persistence)
+	// MULTIPLAYER: Already per-agent, scales naturally
+	ExploredTiles map[string]bool `json:"-"` // "x,y" -> true, not serialized to client
 }
 
-// Default values for new agents
+// Default values for new agents (used when no balance config provided)
 const (
 	DefaultHP        = 3
 	DefaultMaxHP     = 3
@@ -50,8 +61,27 @@ const (
 	RespawnTicks     = 5
 )
 
-// NewAgent creates a new agent
+// DefaultInventorySlots is defined in inventory.go
+
+// NewAgent creates a new agent with default balance values
 func NewAgent(gameID uuid.UUID, name, systemPrompt string, startPos Position, maxMemory int) *Agent {
+	return NewAgentWithBalance(gameID, name, systemPrompt, startPos, maxMemory, nil)
+}
+
+// NewAgentWithBalance creates a new agent with specific balance configuration
+func NewAgentWithBalance(gameID uuid.UUID, name, systemPrompt string, startPos Position, maxMemory int, balance *config.BalanceConfig) *Agent {
+	hp := DefaultHP
+	maxHP := DefaultMaxHP
+	energy := DefaultEnergy
+	maxEnergy := DefaultMaxEnergy
+
+	if balance != nil {
+		hp = balance.Agent.DefaultHP
+		maxHP = balance.Agent.DefaultMaxHP
+		energy = balance.Agent.DefaultEnergy
+		maxEnergy = balance.Agent.DefaultMaxEnergy
+	}
+
 	agent := &Agent{
 		ID:            uuid.New(),
 		GameID:        gameID,
@@ -61,14 +91,16 @@ func NewAgent(gameID uuid.UUID, name, systemPrompt string, startPos Position, ma
 		Memory:        make([]string, 0, maxMemory),
 		MaxMemory:     maxMemory,
 		IsAdversary:   false,
-		HP:            DefaultHP,
-		MaxHP:         DefaultMaxHP,
-		Energy:        DefaultEnergy,
-		MaxEnergy:     DefaultMaxEnergy,
+		HP:            hp,
+		MaxHP:         maxHP,
+		Energy:        energy,
+		MaxEnergy:     maxEnergy,
 		VisionLevel:   1,
 		MemoryLevel:   1,
 		StrengthLevel: 1,
 		StorageLevel:  1,
+		SpeedLevel:    1,
+		ClaimLevel:    1,
 	}
 	return agent
 }
@@ -80,31 +112,50 @@ func (a *Agent) InitInventory(registry *ItemRegistry) {
 	a.Inventory = NewInventory(a.ID, DefaultInventorySlots+(a.StorageLevel-1)*5, registry)
 }
 
-// NewAdversaryAgent creates an AI adversary agent
+// NewAdversaryAgent creates an AI adversary agent with default balance values
 func NewAdversaryAgent(gameID uuid.UUID, adversaryType string, startPos Position, maxMemory int) *Agent {
-	config, ok := Adversaries[adversaryType]
+	return NewAdversaryAgentWithBalance(gameID, adversaryType, startPos, maxMemory, nil)
+}
+
+// NewAdversaryAgentWithBalance creates an AI adversary agent with specific balance configuration
+func NewAdversaryAgentWithBalance(gameID uuid.UUID, adversaryType string, startPos Position, maxMemory int, balance *config.BalanceConfig) *Agent {
+	advConfig, ok := Adversaries[adversaryType]
 	if !ok {
-		config = Adversaries["chaotic"] // Default to chaotic if unknown
+		advConfig = Adversaries["chaotic"] // Default to chaotic if unknown
+	}
+
+	hp := DefaultHP
+	maxHP := DefaultMaxHP
+	energy := DefaultEnergy
+	maxEnergy := DefaultMaxEnergy
+
+	if balance != nil {
+		hp = balance.Agent.DefaultHP
+		maxHP = balance.Agent.DefaultMaxHP
+		energy = balance.Agent.DefaultEnergy
+		maxEnergy = balance.Agent.DefaultMaxEnergy
 	}
 
 	return &Agent{
 		ID:            uuid.New(),
 		GameID:        gameID,
-		Name:          config.Name,
-		SystemPrompt:  config.Prompt,
+		Name:          advConfig.Name,
+		SystemPrompt:  advConfig.Prompt,
 		Position:      startPos,
 		Memory:        make([]string, 0, maxMemory),
 		MaxMemory:     maxMemory,
 		IsAdversary:   true,
 		AdversaryType: adversaryType,
-		HP:            DefaultHP,
-		MaxHP:         DefaultMaxHP,
-		Energy:        DefaultEnergy,
-		MaxEnergy:     DefaultMaxEnergy,
+		HP:            hp,
+		MaxHP:         maxHP,
+		Energy:        energy,
+		MaxEnergy:     maxEnergy,
 		VisionLevel:   1,
 		MemoryLevel:   1,
 		StrengthLevel: 1,
 		StorageLevel:  1,
+		SpeedLevel:    1,
+		ClaimLevel:    1,
 	}
 }
 
@@ -174,10 +225,13 @@ func (a *Agent) Snapshot() AgentSnapshot {
 		MaxHP:         a.MaxHP,
 		Energy:        a.Energy,
 		MaxEnergy:     a.MaxEnergy,
+		Coins:         a.Coins,
 		VisionLevel:   a.VisionLevel,
 		MemoryLevel:   a.MemoryLevel,
 		StrengthLevel: a.StrengthLevel,
 		StorageLevel:  a.StorageLevel,
+		SpeedLevel:    a.SpeedLevel,
+		ClaimLevel:    a.ClaimLevel,
 		IsDead:        a.IsDead,
 	}
 }
@@ -193,10 +247,13 @@ type AgentSnapshot struct {
 	MaxHP         int       `json:"max_hp"`
 	Energy        int       `json:"energy"`
 	MaxEnergy     int       `json:"max_energy"`
+	Coins         int       `json:"coins"`
 	VisionLevel   int       `json:"vision_level"`
 	MemoryLevel   int       `json:"memory_level"`
 	StrengthLevel int       `json:"strength_level"`
 	StorageLevel  int       `json:"storage_level"`
+	SpeedLevel    int       `json:"speed_level"`
+	ClaimLevel    int       `json:"claim_level"`
 	IsDead        bool      `json:"is_dead"`
 }
 
@@ -261,6 +318,31 @@ func (a *Agent) SpendEnergy(amount int) bool {
 	return true
 }
 
+// GetCoins returns the agent's coin count (thread-safe)
+func (a *Agent) GetCoins() int {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+	return a.Coins
+}
+
+// AddCoins adds coins to the agent (thread-safe, no cap)
+func (a *Agent) AddCoins(amount int) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.Coins += amount
+}
+
+// SpendCoins attempts to spend coins, returns true if successful
+func (a *Agent) SpendCoins(amount int) bool {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if a.Coins < amount {
+		return false
+	}
+	a.Coins -= amount
+	return true
+}
+
 // TakeDamage applies damage to the agent, returns true if killed
 func (a *Agent) TakeDamage(damage int) bool {
 	a.mu.Lock()
@@ -289,6 +371,7 @@ func (a *Agent) Kill(currentTick int) {
 	defer a.mu.Unlock()
 	a.IsDead = true
 	a.HP = 0
+	a.Coins = 0
 	a.DeathTick = currentTick
 	a.RespawnTick = currentTick + RespawnTicks
 }
@@ -332,6 +415,20 @@ func (a *Agent) GetEffectiveStrength() int {
 	return 1 + (a.StrengthLevel - 1)
 }
 
+// GetEffectiveMoveSpeed returns move speed (tiles per MOVE) with upgrades
+func (a *Agent) GetEffectiveMoveSpeed(baseMoveSpeed int) int {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+	return baseMoveSpeed + (a.SpeedLevel - 1)
+}
+
+// GetEffectiveClaimRadius returns claim radius with upgrades
+func (a *Agent) GetEffectiveClaimRadius(baseClaimRadius int) int {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+	return baseClaimRadius + (a.ClaimLevel - 1)
+}
+
 // GetUpgradeCost returns the cost to upgrade to the next level
 func GetUpgradeCost(currentLevel int) int {
 	switch currentLevel {
@@ -366,6 +463,12 @@ func (a *Agent) CanUpgrade(upgradeType string) (bool, int, string) {
 		maxLevel = 3
 	case "storage":
 		currentLevel = a.StorageLevel
+		maxLevel = 3
+	case "speed":
+		currentLevel = a.SpeedLevel
+		maxLevel = 3
+	case "claim":
+		currentLevel = a.ClaimLevel
 		maxLevel = 3
 	default:
 		return false, 0, "invalid upgrade type"
@@ -410,9 +513,42 @@ func (a *Agent) ApplyUpgrade(upgradeType string) bool {
 		if a.Inventory != nil {
 			a.Inventory.ExpandSlots(5)
 		}
+	case "speed":
+		a.SpeedLevel++
+	case "claim":
+		a.ClaimLevel++
 	}
 
 	return true
+}
+
+// UpdateExploredTiles marks tiles as explored for fog of war
+func (a *Agent) UpdateExploredTiles(visibleTiles []*Tile) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	if a.ExploredTiles == nil {
+		a.ExploredTiles = make(map[string]bool)
+	}
+	for _, tile := range visibleTiles {
+		key := fmt.Sprintf("%d,%d", tile.Position.X, tile.Position.Y)
+		a.ExploredTiles[key] = true
+	}
+}
+
+// GetExploredTiles returns a copy of the explored tiles map
+func (a *Agent) GetExploredTiles() map[string]bool {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+
+	if a.ExploredTiles == nil {
+		return make(map[string]bool)
+	}
+	explored := make(map[string]bool, len(a.ExploredTiles))
+	for k, v := range a.ExploredTiles {
+		explored[k] = v
+	}
+	return explored
 }
 
 // AgentContext contains all information needed for an agent to make a decision
@@ -427,7 +563,10 @@ type AgentContext struct {
 	WorldSize        int
 	CurrentTileOwned bool
 	CurrentTileEnemy bool
-	EnergyPerTick    int // Passive income from owned tiles
+	EnergyPerTick    int    // Passive income from owned tiles
+	MoveSpeed        int    // Effective tiles per MOVE action
+	ClaimRadius      int    // Effective claim radius
+	CurrentBiome     string // Biome type at agent's current position
 }
 
 // IncomingMessage represents a message received by an agent

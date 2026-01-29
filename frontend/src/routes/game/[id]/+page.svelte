@@ -2,9 +2,13 @@
 	import { page } from '$app/stores';
 	import { onMount, onDestroy } from 'svelte';
 	import { connectToGame, disconnect } from '$lib/stores/ws';
-	import { setPlayerAgentId, resetGame, logEntries } from '$lib/stores/game';
+	import { setPlayerAgentId, resetGame, logEntries, playerAgent } from '$lib/stores/game';
+	import { playerInventory } from '$lib/stores/inventory';
+	import { hudVisible } from '$lib/stores/overlay';
 	import WorldMap from '$lib/components/WorldMap.svelte';
 	import GameControls from '$lib/components/GameControls.svelte';
+	import AgentInfo from '$lib/components/AgentInfo.svelte';
+	import InventoryPanel from '$lib/components/InventoryPanel.svelte';
 
 	$: gameId = $page.params.id ?? '';
 	$: playerAgentId = $page.url.searchParams.get('agent');
@@ -14,7 +18,8 @@
 			setPlayerAgentId(playerAgentId);
 		}
 		if (gameId) {
-			connectToGame(gameId);
+			// Pass playerAgentId for fog of war calculation
+			connectToGame(gameId, playerAgentId || undefined);
 		}
 	});
 
@@ -30,7 +35,17 @@
 		<h1>Game: {gameId ? gameId.slice(0, 8) : '...'}...</h1>
 	</header>
 
-	<div class="game-layout">
+	<div class="game-layout" class:has-left-sidebar={$hudVisible && ($playerAgent || $playerInventory)}>
+		{#if $hudVisible && ($playerAgent || $playerInventory)}
+			<div class="left-sidebar">
+				{#if $playerAgent}
+					<AgentInfo agent={$playerAgent} isPlayer={true} />
+				{/if}
+				{#if $playerInventory}
+					<InventoryPanel inventory={$playerInventory} />
+				{/if}
+			</div>
+		{/if}
 		<div class="main-area">
 			<WorldMap />
 		</div>
@@ -45,6 +60,11 @@
 							<span class="agent" class:player-name={entry.isPlayer}>{entry.agentName}</span>
 							<span class="text">{entry.text}</span>
 						</div>
+						{#if entry.reasoning}
+							<div class="reasoning-line">
+								<span class="reasoning-text">{entry.reasoning}</span>
+							</div>
+						{/if}
 					{/each}
 					{#if $logEntries.length === 0}
 						<div class="empty">Waiting for game actions...</div>
@@ -87,8 +107,20 @@
 	.game-layout {
 		flex: 1;
 		display: grid;
-		grid-template-columns: 1fr 320px;
-		gap: 16px;
+		grid-template-columns: 1fr 300px;
+		gap: 12px;
+		min-height: 0;
+	}
+
+	.game-layout.has-left-sidebar {
+		grid-template-columns: 260px 1fr 300px;
+	}
+
+	.left-sidebar {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		overflow-y: auto;
 		min-height: 0;
 	}
 
@@ -99,14 +131,24 @@
 	.sidebar {
 		display: flex;
 		flex-direction: column;
-		gap: 16px;
+		gap: 12px;
 		overflow-y: auto;
 	}
 
+	@media (max-width: 1100px) {
+		.game-layout.has-left-sidebar {
+			grid-template-columns: 220px 1fr 260px;
+		}
+	}
+
 	@media (max-width: 900px) {
-		.game-layout {
+		.game-layout,
+		.game-layout.has-left-sidebar {
 			grid-template-columns: 1fr;
 			grid-template-rows: 1fr auto;
+		}
+		.left-sidebar {
+			display: none;
 		}
 	}
 
@@ -186,6 +228,17 @@
 	.log-entry.error .text { color: #fca5a5; }
 
 	.log-entry.info .text { color: #9ca3af; }
+
+	.reasoning-line {
+		padding: 2px 8px 4px 44px;
+		font-style: italic;
+		color: #6b7280;
+		font-size: 11px;
+	}
+
+	.reasoning-text {
+		color: #8b8fa3;
+	}
 
 	.text {
 		flex: 1;

@@ -23,6 +23,11 @@ func NewWorldPopulator(seed int64, world *World, worldObjects *WorldObjectManage
 // PopulateWorld adds resources, shrines, caches, portals, and obelisks to the world
 func (wp *WorldPopulator) PopulateWorld() {
 	wp.spawnResources()
+	wp.PopulateInteractives()
+}
+
+// PopulateInteractives adds shrines, caches, portals, and obelisks (no resources)
+func (wp *WorldPopulator) PopulateInteractives() {
 	wp.spawnShrines()
 	wp.spawnCaches()
 	wp.spawnPortals()

@@ -2,7 +2,9 @@ package game
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"math/rand"
 	"sync"
 	"time"
 
@@ -22,22 +24,31 @@ const (
 
 // Engine manages a single game instance
 type Engine struct {
-	mu             sync.RWMutex
-	ID             uuid.UUID
-	config         config.GameConfig
-	world          *World
-	agents         map[uuid.UUID]*Agent
-	messages       []GameMessage
-	llmClient      LLMClient
-	promptBuilder  PromptBuilder
-	broadcaster    Broadcaster
-	status         GameStatus
-	tick           int
-	cancel         context.CancelFunc
-	resolver       *ConflictResolver
-	worldObjects   *WorldObjectManager
-	itemRegistry   *ItemRegistry
-	recipeRegistry *RecipeRegistry
+	mu              sync.RWMutex
+	ID              uuid.UUID
+	config          config.GameConfig
+	balance         config.BalanceConfig
+	world           *World
+	agents          map[uuid.UUID]*Agent
+	messages        []GameMessage
+	llmClient       LLMClient
+	promptBuilder   PromptBuilder
+	broadcaster     Broadcaster
+	status          GameStatus
+	tick            int
+	cancel          context.CancelFunc
+	resolver        *ConflictResolver
+	worldObjects    *WorldObjectManager
+	itemRegistry    *ItemRegistry
+	recipeRegistry  *RecipeRegistry
+	handlerRegistry *HandlerRegistry
+	paused          bool // When true, tick loop doesn't run
+
+	// Biome/loot registries for per-tick resource spawning
+	biomeRegistry *worldgen.BiomeRegistry
+	lootTables    *worldgen.LootTableRegistry
+	biomeLoot     map[worldgen.BiomeType]worldgen.BiomeLootTable
+	spawnRng      *rand.Rand
 }
 
 // GameMessage represents a message sent during the game
@@ -51,6 +62,7 @@ type GameMessage struct {
 // Broadcaster interface for sending game updates
 type Broadcaster interface {
 	BroadcastToGame(gameID uuid.UUID, message interface{})
+	BroadcastToGameWithVisibility(gameID uuid.UUID, baseUpdate interface{}, visibilityProvider func(playerAgentID uuid.UUID) []string, inventoryProvider func(playerAgentID uuid.UUID) interface{})
 }
 
 // LLMClient interface for getting actions from an LLM
@@ -65,34 +77,41 @@ type PromptBuilder interface {
 
 // NewEngine creates a new game engine with default (flat plains) terrain
 func NewEngine(id uuid.UUID, cfg config.GameConfig, llmClient LLMClient, promptBuilder PromptBuilder, broadcaster Broadcaster) *Engine {
-	return NewEngineWithSeed(id, cfg, llmClient, promptBuilder, broadcaster, 0)
+	return NewEngineWithSeed(id, cfg, config.DefaultBalanceConfig(), llmClient, promptBuilder, broadcaster, 0)
 }
 
 // NewEngineWithSeed creates a new game engine with procedurally generated terrain
-func NewEngineWithSeed(id uuid.UUID, cfg config.GameConfig, llmClient LLMClient, promptBuilder PromptBuilder, broadcaster Broadcaster, seed int64) *Engine {
+func NewEngineWithSeed(id uuid.UUID, cfg config.GameConfig, balance config.BalanceConfig, llmClient LLMClient, promptBuilder PromptBuilder, broadcaster Broadcaster, seed int64) *Engine {
 	var world *World
+	var enhancedTiles [][]worldgen.EnhancedTileData
+	var mapConfig *worldgen.MapConfig
+	mapSize := cfg.GetMapSize()
+
 	if seed == 0 {
 		// Use flat plains world when no seed
-		world = NewWorld(cfg.MapSize)
+		world = NewWorld(mapSize)
 	} else {
-		// Generate procedural terrain with seed
-		gen := worldgen.NewWorldGenerator(seed)
-		tileData := gen.Generate(cfg.MapSize)
+		// Generate procedural terrain with enhanced biome system
+		mapConfig = worldgen.DefaultMapConfig()
+		mapConfig.CustomSize = mapSize
+		enhancedGen := worldgen.NewEnhancedWorldGenerator(seed, mapConfig)
+		enhancedTiles = enhancedGen.Generate()
 
-		// Convert worldgen.TileData to game.Tile
-		tiles := make([][]*Tile, cfg.MapSize)
-		for y := 0; y < cfg.MapSize; y++ {
-			tiles[y] = make([]*Tile, cfg.MapSize)
-			for x := 0; x < cfg.MapSize; x++ {
+		// Convert worldgen.EnhancedTileData to game.Tile (preserving biome)
+		tiles := make([][]*Tile, mapSize)
+		for y := 0; y < mapSize; y++ {
+			tiles[y] = make([]*Tile, mapSize)
+			for x := 0; x < mapSize; x++ {
 				tiles[y][x] = &Tile{
 					Position: Position{X: x, Y: y},
 					OwnerID:  nil,
-					Terrain:  TerrainType(tileData[y][x].Terrain),
+					Terrain:  TerrainType(enhancedTiles[y][x].Terrain),
+					Biome:    string(enhancedTiles[y][x].Biome),
 				}
 			}
 		}
 
-		world = NewWorldWithSeed(cfg.MapSize, seed, tiles)
+		world = NewWorldWithSeed(mapSize, seed, tiles)
 	}
 
 	// Initialize registries
@@ -100,27 +119,41 @@ func NewEngineWithSeed(id uuid.UUID, cfg config.GameConfig, llmClient LLMClient,
 	recipeRegistry := DefaultRecipeRegistry()
 	worldObjects := NewWorldObjectManager()
 
+	// Initialize biome/loot registries for per-tick resource spawning
+	biomeRegistry := worldgen.DefaultBiomeRegistry()
+	lootTables := worldgen.NewLootTableRegistry(seed + 3000)
+	biomeLoot := worldgen.GetBiomeLootTables()
+
 	engine := &Engine{
-		ID:             id,
-		config:         cfg,
-		world:          world,
-		agents:         make(map[uuid.UUID]*Agent),
-		messages:       make([]GameMessage, 0),
-		llmClient:      llmClient,
-		promptBuilder:  promptBuilder,
-		broadcaster:    broadcaster,
-		status:         StatusWaiting,
-		tick:           0,
-		resolver:       NewConflictResolver(),
-		worldObjects:   worldObjects,
-		itemRegistry:   itemRegistry,
-		recipeRegistry: recipeRegistry,
+		ID:              id,
+		config:          cfg,
+		balance:         balance,
+		world:           world,
+		agents:          make(map[uuid.UUID]*Agent),
+		messages:        make([]GameMessage, 0),
+		llmClient:       llmClient,
+		promptBuilder:   promptBuilder,
+		broadcaster:     broadcaster,
+		status:          StatusWaiting,
+		tick:            0,
+		resolver:        NewConflictResolver(),
+		worldObjects:    worldObjects,
+		itemRegistry:    itemRegistry,
+		recipeRegistry:  recipeRegistry,
+		handlerRegistry: nil, // Set via SetHandlerRegistry
+		biomeRegistry:   biomeRegistry,
+		lootTables:      lootTables,
+		biomeLoot:       biomeLoot,
+		spawnRng:        rand.New(rand.NewSource(seed + 4000)),
 	}
 
-	// Populate world with resources and interactives if using a seed
-	if seed != 0 {
+	// Populate world with interactives (no initial resources — they spawn per-tick)
+	if seed != 0 && enhancedTiles != nil && mapConfig != nil {
+		populator := NewEnhancedWorldPopulator(seed, world, worldObjects, mapConfig, enhancedTiles)
+		populator.PopulateInteractives()
+	} else if seed != 0 {
 		populator := NewWorldPopulator(seed, world, worldObjects)
-		populator.PopulateWorld()
+		populator.PopulateInteractives()
 	}
 
 	return engine
@@ -159,7 +192,7 @@ func (e *Engine) RemoveAgent(agentID uuid.UUID) {
 	delete(e.agents, agentID)
 }
 
-// Start begins the game loop
+// Start begins the game loop (unless paused)
 func (e *Engine) Start() error {
 	e.mu.Lock()
 	if e.status != StatusWaiting {
@@ -173,12 +206,56 @@ func (e *Engine) Start() error {
 	}
 
 	e.status = StatusRunning
+
+	// If paused, don't start the tick loop
+	if e.paused {
+		log.Printf("Game %s started in paused mode (no tick loop)", e.ID)
+		e.mu.Unlock()
+		return nil
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	e.cancel = cancel
 	e.mu.Unlock()
 
 	go e.runLoop(ctx)
 	return nil
+}
+
+// Resume starts the tick loop for a paused game
+func (e *Engine) Resume() error {
+	e.mu.Lock()
+	if e.status != StatusRunning {
+		e.mu.Unlock()
+		return &GameError{"game not running"}
+	}
+
+	if !e.paused {
+		e.mu.Unlock()
+		return &GameError{"game not paused"}
+	}
+
+	e.paused = false
+	ctx, cancel := context.WithCancel(context.Background())
+	e.cancel = cancel
+	e.mu.Unlock()
+
+	log.Printf("Game %s resumed", e.ID)
+	go e.runLoop(ctx)
+	return nil
+}
+
+// Pause stops the tick loop but keeps the game running
+func (e *Engine) Pause() {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	if e.cancel != nil {
+		e.cancel()
+		e.cancel = nil
+	}
+	e.paused = true
+	log.Printf("Game %s paused", e.ID)
 }
 
 // Stop ends the game
@@ -210,420 +287,6 @@ func (e *Engine) runLoop(ctx context.Context) {
 	}
 }
 
-// processTick handles a single game tick
-func (e *Engine) processTick(ctx context.Context) {
-	e.mu.Lock()
-	e.tick++
-	tick := e.tick
-	agents := make([]*Agent, 0, len(e.agents))
-	for _, a := range e.agents {
-		agents = append(agents, a)
-	}
-	e.mu.Unlock()
-
-	log.Printf("Game %s: Processing tick %d", e.ID, tick)
-
-	// Phase 1: Process respawns
-	respawnedAgents := e.processRespawns(tick)
-
-	// Phase 2: Passive energy income (before actions)
-	e.processPassiveIncome()
-
-	// Build context for each agent (skip dead agents)
-	aliveAgents := make([]*Agent, 0, len(agents))
-	for _, a := range agents {
-		if !a.IsDead {
-			aliveAgents = append(aliveAgents, a)
-		}
-	}
-	contexts := e.buildAgentContexts(aliveAgents)
-
-	// Fan-out LLM requests with timeout
-	llmCtx, cancel := context.WithTimeout(ctx, e.config.TickDuration-2*time.Second)
-	actions := e.requestActions(llmCtx, contexts)
-	cancel()
-
-	// Add actions to resolver
-	e.resolver.AddActions(actions)
-
-	// Resolve conflicts (first-come priority)
-	orderedActions := e.resolver.Resolve()
-
-	// Process actions with full processor
-	processor := NewActionProcessorFull(e.world, e.agents, e.worldObjects, e.itemRegistry, e.recipeRegistry, tick)
-	results := processor.ProcessAll(orderedActions)
-
-	// Phase 3: Trigger traps after movement
-	trapResults := e.processTrapTriggers(results)
-	results = append(results, trapResults...)
-
-	// Phase 4: Process despawns
-	removedObjects := e.worldObjects.ProcessDespawns(tick)
-	depletedResources := e.worldObjects.ProcessDepletedResources()
-	removedObjects = append(removedObjects, depletedResources...)
-
-	// Collect messages from this tick
-	tickMessages := e.collectMessages(orderedActions)
-
-	// Build tick update
-	update := e.buildTickUpdate(tick, orderedActions, results, tickMessages, removedObjects, respawnedAgents)
-
-	// Broadcast to all connected clients
-	if e.broadcaster != nil {
-		e.broadcaster.BroadcastToGame(e.ID, update)
-	}
-
-	// Check win condition
-	if tick >= e.config.WinAfterTicks {
-		e.endGame()
-	}
-}
-
-// processRespawns handles agent respawns
-func (e *Engine) processRespawns(tick int) []uuid.UUID {
-	respawned := make([]uuid.UUID, 0)
-
-	for _, agent := range e.agents {
-		if agent.ShouldRespawn(tick) {
-			// Find a valid spawn position at map edge
-			pos := e.findEdgeSpawnPosition()
-			agent.Respawn(pos)
-			respawned = append(respawned, agent.ID)
-			log.Printf("Agent %s respawned at (%d,%d)", agent.Name, pos.X, pos.Y)
-		}
-	}
-
-	return respawned
-}
-
-// findEdgeSpawnPosition finds a valid spawn position at the map edge
-func (e *Engine) findEdgeSpawnPosition() Position {
-	size := e.world.Size()
-	edges := []Position{}
-
-	// Collect all passable edge positions
-	for x := 0; x < size; x++ {
-		// Top edge
-		pos := Position{X: x, Y: 0}
-		if e.isValidSpawnPosition(pos) {
-			edges = append(edges, pos)
-		}
-		// Bottom edge
-		pos = Position{X: x, Y: size - 1}
-		if e.isValidSpawnPosition(pos) {
-			edges = append(edges, pos)
-		}
-	}
-	for y := 1; y < size-1; y++ {
-		// Left edge
-		pos := Position{X: 0, Y: y}
-		if e.isValidSpawnPosition(pos) {
-			edges = append(edges, pos)
-		}
-		// Right edge
-		pos = Position{X: size - 1, Y: y}
-		if e.isValidSpawnPosition(pos) {
-			edges = append(edges, pos)
-		}
-	}
-
-	if len(edges) == 0 {
-		// Fallback to center if no edges available
-		return Position{X: size / 2, Y: size / 2}
-	}
-
-	// Pick a random edge position
-	return edges[time.Now().UnixNano()%int64(len(edges))]
-}
-
-// isValidSpawnPosition checks if a position is valid for spawning
-func (e *Engine) isValidSpawnPosition(pos Position) bool {
-	tile := e.world.GetTile(pos)
-	if tile == nil {
-		return false
-	}
-	if tile.Terrain == TerrainWater || tile.Terrain == TerrainMountain {
-		return false
-	}
-	// Check for blocking structures
-	if e.worldObjects.HasBlockingObject(pos) {
-		return false
-	}
-	// Check for other agents
-	for _, agent := range e.agents {
-		if !agent.IsDead && agent.GetPosition() == pos {
-			return false
-		}
-	}
-	return true
-}
-
-// processPassiveIncome gives agents energy based on owned tiles
-func (e *Engine) processPassiveIncome() {
-	for _, agent := range e.agents {
-		if agent.IsDead {
-			continue
-		}
-
-		ownedTiles := e.world.GetOwnedTiles(agent.ID)
-		energyGain := 0
-
-		for _, pos := range ownedTiles {
-			tile := e.world.GetTile(pos)
-			if tile == nil {
-				continue
-			}
-			switch tile.Terrain {
-			case TerrainPlains:
-				energyGain += 1
-			case TerrainForest:
-				energyGain += 2
-			}
-		}
-
-		if energyGain > 0 {
-			agent.AddEnergy(energyGain)
-		}
-	}
-}
-
-// processTrapTriggers checks for and triggers traps after movement
-func (e *Engine) processTrapTriggers(results []ActionResult) []ActionResult {
-	trapResults := make([]ActionResult, 0)
-
-	for _, result := range results {
-		if result.Action == ActionMove && result.Success && result.NewPos != nil {
-			agent := e.agents[result.AgentID]
-			if agent == nil || agent.IsDead {
-				continue
-			}
-
-			// Check for traps at new position
-			traps := e.worldObjects.GetTrapsAt(*result.NewPos)
-			for _, trap := range traps {
-				// Don't trigger own traps
-				if trap.OwnerID != nil && *trap.OwnerID == agent.ID {
-					continue
-				}
-
-				// Trigger trap
-				damage := trap.Damage
-				if damage == 0 {
-					damage = 1
-				}
-
-				killed := agent.TakeDamage(damage)
-				trapResult := ActionResult{
-					AgentID:     agent.ID,
-					Action:      ActionFight, // Use FIGHT to indicate damage
-					Success:     true,
-					DamageDealt: damage,
-					Message:     "triggered a trap",
-				}
-
-				if killed {
-					agent.Kill(e.tick)
-					// Clear tiles on death
-					ownedTiles := e.world.GetOwnedTiles(agent.ID)
-					for _, pos := range ownedTiles {
-						e.world.SetOwner(pos, nil)
-					}
-					if agent.Inventory != nil {
-						agent.Inventory.Clear()
-					}
-					trapResult.Message = "killed by a trap"
-				}
-
-				trapResults = append(trapResults, trapResult)
-
-				// Remove the trap after triggering
-				e.worldObjects.Remove(trap.ID)
-			}
-		}
-	}
-
-	return trapResults
-}
-
-// buildAgentContexts creates context for each agent
-func (e *Engine) buildAgentContexts(agents []*Agent) []AgentContext {
-	contexts := make([]AgentContext, len(agents))
-
-	e.mu.RLock()
-	tickMessages := e.getMessagesForTick(e.tick - 1)
-	e.mu.RUnlock()
-
-	for i, agent := range agents {
-		pos := agent.GetPosition()
-		currentTile := e.world.GetTile(pos)
-
-		// Determine current tile ownership status
-		currentTileOwned := false
-		currentTileEnemy := false
-		if currentTile != nil && currentTile.OwnerID != nil {
-			if *currentTile.OwnerID == agent.ID {
-				currentTileOwned = true
-			} else {
-				currentTileEnemy = true
-			}
-		}
-
-		// Calculate effective vision (base + upgrades + beacons)
-		visionRadius := agent.GetEffectiveVision(e.config.VisionRadius)
-
-		// Add vision bonus from nearby beacons
-		beacons := e.worldObjects.GetByOwner(agent.ID)
-		for _, beacon := range beacons {
-			if beacon.Type == ObjectStructure && beacon.StructureType == StructureBeacon {
-				// Check if beacon is within vision range
-				dx := beacon.Position.X - pos.X
-				dy := beacon.Position.Y - pos.Y
-				if dx >= -visionRadius && dx <= visionRadius && dy >= -visionRadius && dy <= visionRadius {
-					visionRadius += beacon.VisionBonus
-				}
-			}
-		}
-
-		// Calculate energy income per tick
-		ownedTiles := e.world.GetOwnedTiles(agent.ID)
-		energyPerTick := 0
-		for _, tilePos := range ownedTiles {
-			tile := e.world.GetTile(tilePos)
-			if tile != nil {
-				switch tile.Terrain {
-				case TerrainPlains:
-					energyPerTick += 1
-				case TerrainForest:
-					energyPerTick += 2
-				}
-			}
-		}
-
-		// Get visible objects (excluding hidden traps from other players)
-		visibleObjects := e.worldObjects.GetVisibleObjects(pos, visionRadius, &agent.ID)
-
-		// Get visible agents
-		visibleAgents := make([]*AgentSnapshot, 0)
-		for _, other := range e.agents {
-			if other.ID == agent.ID || other.IsDead {
-				continue
-			}
-			otherPos := other.GetPosition()
-			dx := otherPos.X - pos.X
-			dy := otherPos.Y - pos.Y
-			if dx >= -visionRadius && dx <= visionRadius && dy >= -visionRadius && dy <= visionRadius {
-				snap := other.Snapshot()
-				visibleAgents = append(visibleAgents, &snap)
-			}
-		}
-
-		contexts[i] = AgentContext{
-			Agent:            agent,
-			VisibleTiles:     e.world.GetVisibleTiles(pos, visionRadius),
-			VisibleObjects:   visibleObjects,
-			VisibleAgents:    visibleAgents,
-			OwnedCount:       len(ownedTiles),
-			Messages:         e.filterMessagesForAgent(tickMessages, agent.ID),
-			CurrentTick:      e.tick,
-			WorldSize:        e.config.MapSize,
-			CurrentTileOwned: currentTileOwned,
-			CurrentTileEnemy: currentTileEnemy,
-			EnergyPerTick:    energyPerTick,
-		}
-	}
-
-	return contexts
-}
-
-// requestActions gets actions from all agents in parallel
-func (e *Engine) requestActions(ctx context.Context, contexts []AgentContext) []Action {
-	var wg sync.WaitGroup
-	actions := make([]Action, len(contexts))
-
-	for i, agentCtx := range contexts {
-		wg.Add(1)
-		go func(idx int, actx AgentContext) {
-			defer wg.Done()
-
-			prompt := e.promptBuilder.BuildPrompt(actx)
-			action, err := e.llmClient.GetAction(ctx, actx.Agent.ID, prompt)
-			if err != nil {
-				log.Printf("LLM error for agent %s: %v", actx.Agent.Name, err)
-				action = WaitAction(actx.Agent.ID)
-			}
-			action.ReceivedAt = time.Now()
-			actions[idx] = action
-		}(i, agentCtx)
-	}
-
-	wg.Wait()
-	return actions
-}
-
-// collectMessages extracts messages from actions
-func (e *Engine) collectMessages(actions []Action) []GameMessage {
-	messages := make([]GameMessage, 0)
-
-	for _, action := range actions {
-		if action.Type == ActionMessage && action.Params.Message != "" {
-			msg := GameMessage{
-				Tick:        e.tick,
-				FromAgentID: action.AgentID,
-				ToAgentID:   action.Params.Target,
-				Content:     action.Params.Message,
-			}
-			messages = append(messages, msg)
-		}
-	}
-
-	e.mu.Lock()
-	e.messages = append(e.messages, messages...)
-	e.mu.Unlock()
-
-	return messages
-}
-
-// getMessagesForTick returns messages from a specific tick
-func (e *Engine) getMessagesForTick(tick int) []GameMessage {
-	result := make([]GameMessage, 0)
-	for _, msg := range e.messages {
-		if msg.Tick == tick {
-			result = append(result, msg)
-		}
-	}
-	return result
-}
-
-// filterMessagesForAgent filters messages that an agent should receive
-func (e *Engine) filterMessagesForAgent(messages []GameMessage, agentID uuid.UUID) []IncomingMessage {
-	result := make([]IncomingMessage, 0)
-
-	for _, msg := range messages {
-		// Skip own messages
-		if msg.FromAgentID == agentID {
-			continue
-		}
-
-		// Include if broadcast or targeted to this agent
-		if msg.ToAgentID == nil || *msg.ToAgentID == agentID {
-			fromAgent, ok := e.agents[msg.FromAgentID]
-			fromName := "Unknown"
-			if ok {
-				fromName = fromAgent.Name
-			}
-
-			result = append(result, IncomingMessage{
-				FromAgentID:   msg.FromAgentID,
-				FromAgentName: fromName,
-				Content:       msg.Content,
-				IsBroadcast:   msg.ToAgentID == nil,
-			})
-		}
-	}
-
-	return result
-}
-
 // TickUpdate represents the changes in a single tick
 type TickUpdate struct {
 	Type     string         `json:"type"`
@@ -634,13 +297,15 @@ type TickUpdate struct {
 
 // TickChanges contains all changes from a tick
 type TickChanges struct {
-	Tiles          []TileChange          `json:"tiles"`
-	Agents         []AgentSnapshot       `json:"agents"`
-	Messages       []GameMessage         `json:"messages"`
-	Results        []ActionResult        `json:"results"`
-	ObjectsAdded   []WorldObjectSnapshot `json:"objects_added,omitempty"`
-	ObjectsRemoved []uuid.UUID           `json:"objects_removed,omitempty"`
-	Respawned      []uuid.UUID           `json:"respawned,omitempty"`
+	Tiles           []TileChange          `json:"tiles"`
+	Agents          []AgentSnapshot       `json:"agents"`
+	Messages        []GameMessage         `json:"messages"`
+	Results         []ActionResult        `json:"results"`
+	ObjectsAdded    []WorldObjectSnapshot `json:"objects_added,omitempty"`
+	ObjectsRemoved  []uuid.UUID           `json:"objects_removed,omitempty"`
+	Respawned       []uuid.UUID           `json:"respawned,omitempty"`
+	VisibleTiles    []string              `json:"visible_tiles,omitempty"`    // Per-player fog of war
+	PlayerInventory *InventorySnapshot    `json:"player_inventory,omitempty"` // Per-player inventory
 }
 
 // TileChange represents a tile ownership change
@@ -648,61 +313,6 @@ type TileChange struct {
 	X       int        `json:"x"`
 	Y       int        `json:"y"`
 	OwnerID *uuid.UUID `json:"owner_id"`
-}
-
-// buildTickUpdate creates the tick update message
-func (e *Engine) buildTickUpdate(tick int, actions []Action, results []ActionResult, messages []GameMessage, removedObjects []uuid.UUID, respawnedAgents []uuid.UUID) TickUpdate {
-	// Collect tile changes from claim actions and death-related changes
-	tileChanges := make([]TileChange, 0)
-	for _, result := range results {
-		if result.Action == ActionClaim && result.Success && result.ClaimedAt != nil {
-			agent := e.agents[result.AgentID]
-			if agent != nil {
-				tileChanges = append(tileChanges, TileChange{
-					X:       result.ClaimedAt.X,
-					Y:       result.ClaimedAt.Y,
-					OwnerID: &agent.ID,
-				})
-			}
-		}
-	}
-
-	// Collect agent snapshots
-	agentSnapshots := make([]AgentSnapshot, 0, len(e.agents))
-	for _, agent := range e.agents {
-		agentSnapshots = append(agentSnapshots, agent.Snapshot())
-	}
-
-	// Collect newly added objects (structures placed this tick)
-	addedObjects := make([]WorldObjectSnapshot, 0)
-	for _, result := range results {
-		if result.Action == ActionPlace && result.Success {
-			// Find the structure that was just placed
-			agent := e.agents[result.AgentID]
-			if agent != nil {
-				pos := agent.GetPosition()
-				structure := e.worldObjects.GetStructureAt(pos)
-				if structure != nil && structure.CreatedTick == tick {
-					addedObjects = append(addedObjects, structure.Snapshot())
-				}
-			}
-		}
-	}
-
-	return TickUpdate{
-		Type:   "tick",
-		Tick:   tick,
-		GameID: e.ID,
-		Changes: TickChanges{
-			Tiles:          tileChanges,
-			Agents:         agentSnapshots,
-			Messages:       messages,
-			Results:        results,
-			ObjectsAdded:   addedObjects,
-			ObjectsRemoved: removedObjects,
-			Respawned:      respawnedAgents,
-		},
-	}
 }
 
 // endGame finishes the game and determines winner
@@ -779,6 +389,58 @@ func (e *Engine) GetFullState() FullGameState {
 	}
 }
 
+// GetFullStateForPlayer returns the complete game state with visible tiles calculated for a specific player
+func (e *Engine) GetFullStateForPlayer(playerAgentID uuid.UUID) FullGameState {
+	state := e.GetFullState()
+	state.VisibleTiles = e.getVisibleTilesForPlayer(playerAgentID)
+	if inv := e.getPlayerInventory(playerAgentID); inv != nil {
+		state.PlayerInventory = inv.(*InventorySnapshot)
+	}
+	log.Printf("GetFullStateForPlayer: playerAgentID=%s, visibleTiles=%d", playerAgentID, len(state.VisibleTiles))
+	return state
+}
+
+// getPlayerInventory returns the inventory snapshot for a specific player agent
+func (e *Engine) getPlayerInventory(playerAgentID uuid.UUID) interface{} {
+	e.mu.RLock()
+	agent := e.agents[playerAgentID]
+	e.mu.RUnlock()
+
+	if agent == nil || agent.Inventory == nil {
+		return nil
+	}
+
+	snapshot := agent.Inventory.Snapshot()
+	return &snapshot
+}
+
+// getVisibleTilesForPlayer calculates visible tiles for a specific player
+func (e *Engine) getVisibleTilesForPlayer(playerAgentID uuid.UUID) []string {
+	e.mu.RLock()
+	agent := e.agents[playerAgentID]
+	agentCount := len(e.agents)
+	e.mu.RUnlock()
+
+	if agent == nil {
+		log.Printf("getVisibleTilesForPlayer: agent not found for ID %s (total agents: %d)", playerAgentID, agentCount)
+		return nil
+	}
+	if agent.IsDead {
+		log.Printf("getVisibleTilesForPlayer: agent %s is dead", playerAgentID)
+		return nil
+	}
+
+	pos := agent.GetPosition()
+	visionRadius := CalculateEffectiveVisionRadius(agent, e.config.VisionRadius, e.worldObjects)
+
+	visibleTiles := e.world.GetVisibleTiles(pos, visionRadius)
+	result := make([]string, 0, len(visibleTiles))
+	for _, tile := range visibleTiles {
+		result = append(result, fmt.Sprintf("%d,%d", tile.Position.X, tile.Position.Y))
+	}
+	return result
+}
+
 // GetWorldObjects returns the world object manager
 func (e *Engine) GetWorldObjects() *WorldObjectManager {
 	return e.worldObjects
@@ -794,21 +456,52 @@ func (e *Engine) GetRecipeRegistry() *RecipeRegistry {
 	return e.recipeRegistry
 }
 
+// GetBalance returns the balance configuration
+func (e *Engine) GetBalance() *config.BalanceConfig {
+	return &e.balance
+}
+
+// SetHandlerRegistry sets the handler registry for action processing
+func (e *Engine) SetHandlerRegistry(registry *HandlerRegistry) {
+	e.handlerRegistry = registry
+}
+
+// SetPaused sets whether the game is paused (no tick loop)
+func (e *Engine) SetPaused(paused bool) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	e.paused = paused
+}
+
+// IsPaused returns whether the game is paused
+func (e *Engine) IsPaused() bool {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	return e.paused
+}
+
 // FullGameState represents the complete game state
 type FullGameState struct {
-	Type         string                `json:"type"`
-	GameID       uuid.UUID             `json:"game_id"`
-	Tick         int                   `json:"tick"`
-	Status       GameStatus            `json:"status"`
-	World        WorldSnapshot         `json:"world"`
-	Agents       []AgentSnapshot       `json:"agents"`
-	Messages     []GameMessage         `json:"messages"`
-	WorldObjects []WorldObjectSnapshot `json:"world_objects,omitempty"`
+	Type            string                `json:"type"`
+	GameID          uuid.UUID             `json:"game_id"`
+	Tick            int                   `json:"tick"`
+	Status          GameStatus            `json:"status"`
+	World           WorldSnapshot         `json:"world"`
+	Agents          []AgentSnapshot       `json:"agents"`
+	Messages        []GameMessage         `json:"messages"`
+	WorldObjects    []WorldObjectSnapshot `json:"world_objects,omitempty"`
+	VisibleTiles    []string              `json:"visible_tiles,omitempty"`    // For player's fog of war
+	PlayerInventory *InventorySnapshot    `json:"player_inventory,omitempty"` // For player's inventory
 }
 
 // ForceTick manually triggers the next tick (for dev/testing)
+// Works even when game is paused
 func (e *Engine) ForceTick() {
-	if e.status == StatusRunning {
+	e.mu.RLock()
+	status := e.status
+	e.mu.RUnlock()
+
+	if status == StatusRunning {
 		e.processTick(context.Background())
 	}
 }

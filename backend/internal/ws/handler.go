@@ -35,7 +35,7 @@ var upgrader = websocket.Upgrader{
 
 // GameStateProvider provides game state for new connections
 type GameStateProvider interface {
-	GetFullState(gameID uuid.UUID) (interface{}, error)
+	GetFullState(gameID uuid.UUID, playerAgentID *uuid.UUID) (interface{}, error)
 }
 
 // Handler handles WebSocket connections
@@ -53,7 +53,7 @@ func NewHandler(hub *Hub, stateProvider GameStateProvider) *Handler {
 }
 
 // ServeWS handles WebSocket requests from clients
-func (h *Handler) ServeWS(w http.ResponseWriter, r *http.Request, gameID uuid.UUID) {
+func (h *Handler) ServeWS(w http.ResponseWriter, r *http.Request, gameID uuid.UUID, playerAgentID *uuid.UUID) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Printf("WebSocket upgrade failed: %v", err)
@@ -61,18 +61,19 @@ func (h *Handler) ServeWS(w http.ResponseWriter, r *http.Request, gameID uuid.UU
 	}
 
 	client := &Client{
-		ID:     uuid.New(),
-		GameID: gameID,
-		Conn:   conn,
-		Send:   make(chan []byte, 256),
-		hub:    h.hub,
+		ID:            uuid.New(),
+		GameID:        gameID,
+		PlayerAgentID: playerAgentID,
+		Conn:          conn,
+		Send:          make(chan []byte, 256),
+		hub:           h.hub,
 	}
 
 	h.hub.Register(client)
 
-	// Send initial game state
+	// Send initial game state (with visible tiles if player ID provided)
 	if h.stateProvider != nil {
-		state, err := h.stateProvider.GetFullState(gameID)
+		state, err := h.stateProvider.GetFullState(gameID, playerAgentID)
 		if err == nil {
 			data, _ := json.Marshal(state)
 			client.Send <- data

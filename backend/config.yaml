@@ -5,9 +5,10 @@ server:
 game:
   tick_duration: 10s
   max_players: 4
-  vision_radius: 3
+  vision_radius: 25
   max_memory_items: 10
   win_after_ticks: 100
+  resource_spawn_rate: 1.0  # Multiplier for per-tick biome resource spawning (0 = disabled)
 
   # Map configuration
   map:
@@ -40,6 +41,45 @@ game:
     # Difficulty multiplier (affects enemy spawns, environmental damage)
     difficulty_multiplier: 1.0
 
+# Balance configuration - tweak these values to adjust game balance
+balance:
+  agent:
+    default_hp: 3
+    default_max_hp: 3
+    default_energy: 0
+    default_max_energy: 100
+    respawn_ticks: 5
+    default_vision: 3
+    default_memory: 10
+    default_move_speed: 3     # tiles per MOVE action
+    default_claim_radius: 4   # tiles radius per CLAIM action
+
+  combat:
+    base_damage: 1
+    trap_damage: 1
+    wall_hp: 3
+    beacon_hp: 2
+    trap_hp: 1
+    beacon_vision_bonus: 2
+
+  upgrades:
+    vision_max_level: 5
+    memory_max_level: 5
+    strength_max_level: 3
+    storage_max_level: 3
+    speed_max_level: 3
+    claim_max_level: 3
+    upgrade_costs: [10, 20, 35, 55]
+    memory_per_level: 2
+    storage_per_level: 5
+    speed_per_level: 1    # +1 tile per speed level
+    claim_per_level: 1    # +1 radius per claim level
+
+  actions:
+    scan_energy_cost: 2
+    item_despawn_ticks: 50
+    default_inventory_slots: 10
+
 llm:
   provider: gemini
   model: gemini-2.5-flash-lite
@@ -51,5 +91,6 @@ database:
   redis_url: redis://localhost:6379
 
 dev:
-  enabled: false
+  enabled: true
   mock_llm: false
+  pause_tick: false  # Start games paused (no tick loop, no LLM calls)

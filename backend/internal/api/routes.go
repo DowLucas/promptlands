@@ -34,6 +34,8 @@ func NewRouter(gameManager *game.Manager, hub *ws.Hub, cfg *config.Config) http.
 	// Dev routes (only enabled in dev mode)
 	if cfg.Dev.Enabled {
 		mux.HandleFunc("POST /api/dev/tick/{id}", handler.ForceTick)
+		mux.HandleFunc("POST /api/dev/pause/{id}", handler.PauseGame)
+		mux.HandleFunc("POST /api/dev/resume/{id}", handler.ResumeGame)
 		mux.HandleFunc("GET /api/dev/state/{id}", handler.DebugState)
 	}
 

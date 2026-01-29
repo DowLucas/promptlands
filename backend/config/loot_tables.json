@@ -1,0 +1,1061 @@
+{
+  "loot_tables": [
+    {
+      "id": "loot_forest_resource",
+      "type": "resource",
+      "description": "Resources found in Enchanted Forest",
+      "pools": [
+        {
+          "name": "main",
+          "rolls": {"min": 1, "max": 2},
+          "bonus_rolls": {"min": 0, "max": 0},
+          "entries": [
+            {
+              "item_id": "wood",
+              "weight": 40,
+              "min_quantity": 3,
+              "max_quantity": 6,
+              "rarity": "common"
+            },
+            {
+              "item_id": "herb",
+              "weight": 30,
+              "min_quantity": 2,
+              "max_quantity": 4,
+              "rarity": "common"
+            },
+            {
+              "item_id": "ancient_wood",
+              "weight": 20,
+              "min_quantity": 1,
+              "max_quantity": 3,
+              "rarity": "uncommon"
+            },
+            {
+              "item_id": "spirit_essence",
+              "weight": 10,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "rare"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "loot_desert_resource",
+      "type": "resource",
+      "description": "Resources found in Scorching Dunes",
+      "pools": [
+        {
+          "name": "main",
+          "rolls": {"min": 1, "max": 1},
+          "bonus_rolls": {"min": 0, "max": 0},
+          "entries": [
+            {
+              "item_id": "stone",
+              "weight": 35,
+              "min_quantity": 2,
+              "max_quantity": 5,
+              "rarity": "common"
+            },
+            {
+              "item_id": "sand_glass",
+              "weight": 30,
+              "min_quantity": 2,
+              "max_quantity": 4,
+              "rarity": "uncommon"
+            },
+            {
+              "item_id": "cactus_fruit",
+              "weight": 20,
+              "min_quantity": 1,
+              "max_quantity": 3,
+              "rarity": "uncommon"
+            },
+            {
+              "item_id": "sun_crystal",
+              "weight": 15,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "rare"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "loot_volcanic_resource",
+      "type": "resource",
+      "description": "Resources found in Infernal Caldera",
+      "pools": [
+        {
+          "name": "main",
+          "rolls": {"min": 1, "max": 2},
+          "bonus_rolls": {"min": 0, "max": 0},
+          "entries": [
+            {
+              "item_id": "obsite",
+              "weight": 30,
+              "min_quantity": 2,
+              "max_quantity": 4,
+              "rarity": "uncommon"
+            },
+            {
+              "item_id": "ember_ore",
+              "weight": 30,
+              "min_quantity": 2,
+              "max_quantity": 4,
+              "rarity": "uncommon"
+            },
+            {
+              "item_id": "fire_crystal",
+              "weight": 25,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "rare"
+            },
+            {
+              "item_id": "magma_core",
+              "weight": 10,
+              "min_quantity": 1,
+              "max_quantity": 1,
+              "rarity": "epic"
+            },
+            {
+              "item_id": "phoenix_feather",
+              "weight": 5,
+              "min_quantity": 1,
+              "max_quantity": 1,
+              "rarity": "legendary"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "loot_ice_resource",
+      "type": "resource",
+      "description": "Resources found in Frostbound Wastes",
+      "pools": [
+        {
+          "name": "main",
+          "rolls": {"min": 1, "max": 1},
+          "bonus_rolls": {"min": 0, "max": 0},
+          "entries": [
+            {
+              "item_id": "frost_stone",
+              "weight": 35,
+              "min_quantity": 2,
+              "max_quantity": 4,
+              "rarity": "uncommon"
+            },
+            {
+              "item_id": "ice_crystal",
+              "weight": 30,
+              "min_quantity": 1,
+              "max_quantity": 3,
+              "rarity": "rare"
+            },
+            {
+              "item_id": "frozen_herb",
+              "weight": 20,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "uncommon"
+            },
+            {
+              "item_id": "permafrost_core",
+              "weight": 10,
+              "min_quantity": 1,
+              "max_quantity": 1,
+              "rarity": "epic"
+            },
+            {
+              "item_id": "temporal_ice",
+              "weight": 5,
+              "min_quantity": 1,
+              "max_quantity": 1,
+              "rarity": "legendary"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "loot_savanna_resource",
+      "type": "resource",
+      "description": "Resources found in Mystic Savanna",
+      "pools": [
+        {
+          "name": "main",
+          "rolls": {"min": 1, "max": 2},
+          "bonus_rolls": {"min": 0, "max": 0},
+          "entries": [
+            {
+              "item_id": "herb",
+              "weight": 35,
+              "min_quantity": 2,
+              "max_quantity": 4,
+              "rarity": "common"
+            },
+            {
+              "item_id": "stone",
+              "weight": 30,
+              "min_quantity": 2,
+              "max_quantity": 4,
+              "rarity": "common"
+            },
+            {
+              "item_id": "wood",
+              "weight": 20,
+              "min_quantity": 2,
+              "max_quantity": 3,
+              "rarity": "common"
+            },
+            {
+              "item_id": "ley_essence",
+              "weight": 15,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "rare"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "loot_badlands_resource",
+      "type": "resource",
+      "description": "Resources found in Ember Badlands",
+      "pools": [
+        {
+          "name": "main",
+          "rolls": {"min": 1, "max": 2},
+          "bonus_rolls": {"min": 0, "max": 0},
+          "entries": [
+            {
+              "item_id": "stone",
+              "weight": 30,
+              "min_quantity": 3,
+              "max_quantity": 5,
+              "rarity": "common"
+            },
+            {
+              "item_id": "copper_ore",
+              "weight": 30,
+              "min_quantity": 2,
+              "max_quantity": 4,
+              "rarity": "uncommon"
+            },
+            {
+              "item_id": "iron_ore",
+              "weight": 25,
+              "min_quantity": 2,
+              "max_quantity": 3,
+              "rarity": "uncommon"
+            },
+            {
+              "item_id": "gold_nugget",
+              "weight": 15,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "rare"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "loot_swamp_resource",
+      "type": "resource",
+      "description": "Resources found in Shadowmire",
+      "pools": [
+        {
+          "name": "main",
+          "rolls": {"min": 1, "max": 2},
+          "bonus_rolls": {"min": 0, "max": 0},
+          "entries": [
+            {
+              "item_id": "shadow_moss",
+              "weight": 30,
+              "min_quantity": 2,
+              "max_quantity": 4,
+              "rarity": "uncommon"
+            },
+            {
+              "item_id": "dark_herb",
+              "weight": 30,
+              "min_quantity": 2,
+              "max_quantity": 3,
+              "rarity": "uncommon"
+            },
+            {
+              "item_id": "nightmare_essence",
+              "weight": 25,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "rare"
+            },
+            {
+              "item_id": "umbral_crystal",
+              "weight": 10,
+              "min_quantity": 1,
+              "max_quantity": 1,
+              "rarity": "epic"
+            },
+            {
+              "item_id": "shadow_heart",
+              "weight": 5,
+              "min_quantity": 1,
+              "max_quantity": 1,
+              "rarity": "legendary"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "loot_crystal_resource",
+      "type": "resource",
+      "description": "Resources found in Crystal Spires",
+      "pools": [
+        {
+          "name": "main",
+          "rolls": {"min": 1, "max": 2},
+          "bonus_rolls": {"min": 0, "max": 0},
+          "entries": [
+            {
+              "item_id": "crystal",
+              "weight": 35,
+              "min_quantity": 2,
+              "max_quantity": 4,
+              "rarity": "rare"
+            },
+            {
+              "item_id": "resonant_crystal",
+              "weight": 25,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "epic"
+            },
+            {
+              "item_id": "crystal_shard",
+              "weight": 25,
+              "min_quantity": 3,
+              "max_quantity": 5,
+              "rarity": "uncommon"
+            },
+            {
+              "item_id": "harmonic_gem",
+              "weight": 10,
+              "min_quantity": 1,
+              "max_quantity": 1,
+              "rarity": "legendary"
+            },
+            {
+              "item_id": "void_crystal",
+              "weight": 5,
+              "min_quantity": 1,
+              "max_quantity": 1,
+              "rarity": "mythic"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "loot_void_resource",
+      "type": "resource",
+      "description": "Resources found in Void Rift",
+      "pools": [
+        {
+          "name": "main",
+          "rolls": {"min": 1, "max": 2},
+          "bonus_rolls": {"min": 0, "max": 0},
+          "entries": [
+            {
+              "item_id": "void_shard",
+              "weight": 30,
+              "min_quantity": 1,
+              "max_quantity": 3,
+              "rarity": "rare"
+            },
+            {
+              "item_id": "null_stone",
+              "weight": 25,
+              "min_quantity": 2,
+              "max_quantity": 3,
+              "rarity": "uncommon"
+            },
+            {
+              "item_id": "reality_fragment",
+              "weight": 20,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "epic"
+            },
+            {
+              "item_id": "entropy_essence",
+              "weight": 15,
+              "min_quantity": 1,
+              "max_quantity": 1,
+              "rarity": "epic"
+            },
+            {
+              "item_id": "void_heart",
+              "weight": 10,
+              "min_quantity": 1,
+              "max_quantity": 1,
+              "rarity": "mythic"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "loot_neon_resource",
+      "type": "resource",
+      "description": "Resources found in Neon Wilds",
+      "pools": [
+        {
+          "name": "main",
+          "rolls": {"min": 1, "max": 2},
+          "bonus_rolls": {"min": 0, "max": 0},
+          "entries": [
+            {
+              "item_id": "bio_luminescent",
+              "weight": 35,
+              "min_quantity": 2,
+              "max_quantity": 4,
+              "rarity": "uncommon"
+            },
+            {
+              "item_id": "neon_sap",
+              "weight": 25,
+              "min_quantity": 2,
+              "max_quantity": 4,
+              "rarity": "uncommon"
+            },
+            {
+              "item_id": "alien_spore",
+              "weight": 20,
+              "min_quantity": 1,
+              "max_quantity": 3,
+              "rarity": "rare"
+            },
+            {
+              "item_id": "xenoflora_core",
+              "weight": 15,
+              "min_quantity": 1,
+              "max_quantity": 1,
+              "rarity": "epic"
+            },
+            {
+              "item_id": "primal_genome",
+              "weight": 5,
+              "min_quantity": 1,
+              "max_quantity": 1,
+              "rarity": "legendary"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "loot_plasma_resource",
+      "type": "resource",
+      "description": "Resources found in Plasma Fields",
+      "pools": [
+        {
+          "name": "main",
+          "rolls": {"min": 1, "max": 2},
+          "bonus_rolls": {"min": 0, "max": 0},
+          "entries": [
+            {
+              "item_id": "plasma_cell",
+              "weight": 35,
+              "min_quantity": 2,
+              "max_quantity": 4,
+              "rarity": "uncommon"
+            },
+            {
+              "item_id": "energy_crystal",
+              "weight": 25,
+              "min_quantity": 1,
+              "max_quantity": 3,
+              "rarity": "rare"
+            },
+            {
+              "item_id": "conduit_shard",
+              "weight": 20,
+              "min_quantity": 2,
+              "max_quantity": 3,
+              "rarity": "uncommon"
+            },
+            {
+              "item_id": "fusion_core",
+              "weight": 15,
+              "min_quantity": 1,
+              "max_quantity": 1,
+              "rarity": "epic"
+            },
+            {
+              "item_id": "antimatter_cell",
+              "weight": 5,
+              "min_quantity": 1,
+              "max_quantity": 1,
+              "rarity": "legendary"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "loot_ancient_resource",
+      "type": "resource",
+      "description": "Resources found in Ancient Ruins",
+      "pools": [
+        {
+          "name": "main",
+          "rolls": {"min": 1, "max": 2},
+          "bonus_rolls": {"min": 0, "max": 0},
+          "entries": [
+            {
+              "item_id": "rune_stone",
+              "weight": 30,
+              "min_quantity": 2,
+              "max_quantity": 4,
+              "rarity": "uncommon"
+            },
+            {
+              "item_id": "arcane_dust",
+              "weight": 30,
+              "min_quantity": 2,
+              "max_quantity": 4,
+              "rarity": "uncommon"
+            },
+            {
+              "item_id": "glyph_fragment",
+              "weight": 20,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "rare"
+            },
+            {
+              "item_id": "ancient_rune",
+              "weight": 15,
+              "min_quantity": 1,
+              "max_quantity": 1,
+              "rarity": "epic"
+            },
+            {
+              "item_id": "primordial_sigil",
+              "weight": 5,
+              "min_quantity": 1,
+              "max_quantity": 1,
+              "rarity": "legendary"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "loot_generic_chest",
+      "type": "chest",
+      "description": "Common cache contents",
+      "pools": [
+        {
+          "name": "resources",
+          "rolls": {"min": 2, "max": 4},
+          "bonus_rolls": {"min": 0, "max": 0},
+          "entries": [
+            {
+              "item_id": "wood",
+              "weight": 25,
+              "min_quantity": 3,
+              "max_quantity": 8,
+              "rarity": "common"
+            },
+            {
+              "item_id": "stone",
+              "weight": 25,
+              "min_quantity": 3,
+              "max_quantity": 8,
+              "rarity": "common"
+            },
+            {
+              "item_id": "herb",
+              "weight": 25,
+              "min_quantity": 2,
+              "max_quantity": 5,
+              "rarity": "common"
+            },
+            {
+              "item_id": "crystal",
+              "weight": 15,
+              "min_quantity": 1,
+              "max_quantity": 3,
+              "rarity": "rare"
+            },
+            {
+              "item_id": "ancient_rune",
+              "weight": 10,
+              "min_quantity": 1,
+              "max_quantity": 1,
+              "rarity": "epic"
+            }
+          ]
+        },
+        {
+          "name": "consumables",
+          "rolls": {"min": 0, "max": 2},
+          "bonus_rolls": {"min": 0, "max": 0},
+          "entries": [
+            {
+              "item_id": "health_potion",
+              "weight": 40,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "common"
+            },
+            {
+              "item_id": "energy_potion",
+              "weight": 40,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "common"
+            },
+            {
+              "item_id": "speed_potion",
+              "weight": 20,
+              "min_quantity": 1,
+              "max_quantity": 1,
+              "rarity": "rare"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "loot_forest_chest",
+      "type": "chest",
+      "description": "Chest contents for forest",
+      "pools": [
+        {
+          "name": "base",
+          "rolls": {"min": 2, "max": 3},
+          "bonus_rolls": {"min": 0, "max": 0},
+          "entries": [
+            {
+              "item_id": "crystal",
+              "weight": 30,
+              "min_quantity": 1,
+              "max_quantity": 3,
+              "rarity": "rare"
+            },
+            {
+              "item_id": "health_potion",
+              "weight": 35,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "common"
+            },
+            {
+              "item_id": "energy_potion",
+              "weight": 35,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "common"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "loot_desert_chest",
+      "type": "chest",
+      "description": "Chest contents for desert",
+      "pools": [
+        {
+          "name": "base",
+          "rolls": {"min": 2, "max": 3},
+          "bonus_rolls": {"min": 0, "max": 0},
+          "entries": [
+            {
+              "item_id": "crystal",
+              "weight": 30,
+              "min_quantity": 1,
+              "max_quantity": 3,
+              "rarity": "rare"
+            },
+            {
+              "item_id": "health_potion",
+              "weight": 35,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "common"
+            },
+            {
+              "item_id": "energy_potion",
+              "weight": 35,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "common"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "loot_volcanic_chest",
+      "type": "chest",
+      "description": "Chest contents for volcanic",
+      "pools": [
+        {
+          "name": "base",
+          "rolls": {"min": 2, "max": 3},
+          "bonus_rolls": {"min": 0, "max": 0},
+          "entries": [
+            {
+              "item_id": "crystal",
+              "weight": 30,
+              "min_quantity": 1,
+              "max_quantity": 3,
+              "rarity": "rare"
+            },
+            {
+              "item_id": "health_potion",
+              "weight": 35,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "common"
+            },
+            {
+              "item_id": "energy_potion",
+              "weight": 35,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "common"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "loot_ice_chest",
+      "type": "chest",
+      "description": "Chest contents for ice",
+      "pools": [
+        {
+          "name": "base",
+          "rolls": {"min": 2, "max": 3},
+          "bonus_rolls": {"min": 0, "max": 0},
+          "entries": [
+            {
+              "item_id": "crystal",
+              "weight": 30,
+              "min_quantity": 1,
+              "max_quantity": 3,
+              "rarity": "rare"
+            },
+            {
+              "item_id": "health_potion",
+              "weight": 35,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "common"
+            },
+            {
+              "item_id": "energy_potion",
+              "weight": 35,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "common"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "loot_savanna_chest",
+      "type": "chest",
+      "description": "Chest contents for savanna",
+      "pools": [
+        {
+          "name": "base",
+          "rolls": {"min": 2, "max": 3},
+          "bonus_rolls": {"min": 0, "max": 0},
+          "entries": [
+            {
+              "item_id": "crystal",
+              "weight": 30,
+              "min_quantity": 1,
+              "max_quantity": 3,
+              "rarity": "rare"
+            },
+            {
+              "item_id": "health_potion",
+              "weight": 35,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "common"
+            },
+            {
+              "item_id": "energy_potion",
+              "weight": 35,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "common"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "loot_badlands_chest",
+      "type": "chest",
+      "description": "Chest contents for badlands",
+      "pools": [
+        {
+          "name": "base",
+          "rolls": {"min": 2, "max": 3},
+          "bonus_rolls": {"min": 0, "max": 0},
+          "entries": [
+            {
+              "item_id": "crystal",
+              "weight": 30,
+              "min_quantity": 1,
+              "max_quantity": 3,
+              "rarity": "rare"
+            },
+            {
+              "item_id": "health_potion",
+              "weight": 35,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "common"
+            },
+            {
+              "item_id": "energy_potion",
+              "weight": 35,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "common"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "loot_swamp_chest",
+      "type": "chest",
+      "description": "Chest contents for swamp",
+      "pools": [
+        {
+          "name": "base",
+          "rolls": {"min": 2, "max": 3},
+          "bonus_rolls": {"min": 0, "max": 0},
+          "entries": [
+            {
+              "item_id": "crystal",
+              "weight": 30,
+              "min_quantity": 1,
+              "max_quantity": 3,
+              "rarity": "rare"
+            },
+            {
+              "item_id": "health_potion",
+              "weight": 35,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "common"
+            },
+            {
+              "item_id": "energy_potion",
+              "weight": 35,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "common"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "loot_crystal_chest",
+      "type": "chest",
+      "description": "Chest contents for crystal",
+      "pools": [
+        {
+          "name": "base",
+          "rolls": {"min": 2, "max": 3},
+          "bonus_rolls": {"min": 0, "max": 0},
+          "entries": [
+            {
+              "item_id": "crystal",
+              "weight": 30,
+              "min_quantity": 1,
+              "max_quantity": 3,
+              "rarity": "rare"
+            },
+            {
+              "item_id": "health_potion",
+              "weight": 35,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "common"
+            },
+            {
+              "item_id": "energy_potion",
+              "weight": 35,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "common"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "loot_void_chest",
+      "type": "chest",
+      "description": "Chest contents for void",
+      "pools": [
+        {
+          "name": "base",
+          "rolls": {"min": 2, "max": 3},
+          "bonus_rolls": {"min": 0, "max": 0},
+          "entries": [
+            {
+              "item_id": "crystal",
+              "weight": 30,
+              "min_quantity": 1,
+              "max_quantity": 3,
+              "rarity": "rare"
+            },
+            {
+              "item_id": "health_potion",
+              "weight": 35,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "common"
+            },
+            {
+              "item_id": "energy_potion",
+              "weight": 35,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "common"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "loot_neon_chest",
+      "type": "chest",
+      "description": "Chest contents for neon",
+      "pools": [
+        {
+          "name": "base",
+          "rolls": {"min": 2, "max": 3},
+          "bonus_rolls": {"min": 0, "max": 0},
+          "entries": [
+            {
+              "item_id": "crystal",
+              "weight": 30,
+              "min_quantity": 1,
+              "max_quantity": 3,
+              "rarity": "rare"
+            },
+            {
+              "item_id": "health_potion",
+              "weight": 35,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "common"
+            },
+            {
+              "item_id": "energy_potion",
+              "weight": 35,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "common"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "loot_plasma_chest",
+      "type": "chest",
+      "description": "Chest contents for plasma",
+      "pools": [
+        {
+          "name": "base",
+          "rolls": {"min": 2, "max": 3},
+          "bonus_rolls": {"min": 0, "max": 0},
+          "entries": [
+            {
+              "item_id": "crystal",
+              "weight": 30,
+              "min_quantity": 1,
+              "max_quantity": 3,
+              "rarity": "rare"
+            },
+            {
+              "item_id": "health_potion",
+              "weight": 35,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "common"
+            },
+            {
+              "item_id": "energy_potion",
+              "weight": 35,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "common"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "loot_ancient_chest",
+      "type": "chest",
+      "description": "Chest contents for ancient",
+      "pools": [
+        {
+          "name": "base",
+          "rolls": {"min": 2, "max": 3},
+          "bonus_rolls": {"min": 0, "max": 0},
+          "entries": [
+            {
+              "item_id": "crystal",
+              "weight": 30,
+              "min_quantity": 1,
+              "max_quantity": 3,
+              "rarity": "rare"
+            },
+            {
+              "item_id": "health_potion",
+              "weight": 35,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "common"
+            },
+            {
+              "item_id": "energy_potion",
+              "weight": 35,
+              "min_quantity": 1,
+              "max_quantity": 2,
+              "rarity": "common"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

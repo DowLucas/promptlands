@@ -65,6 +65,7 @@ export interface Agent {
 	memory_level: number;
 	strength_level: number;
 	storage_level: number;
+	coins: number;
 	is_dead: boolean;
 }
 
@@ -165,6 +166,7 @@ export interface ActionResult {
 	action: string;
 	success: boolean;
 	message?: string;
+	reasoning?: string;
 	old_pos?: Position;
 	new_pos?: Position;
 	claimed_at?: Position;
@@ -173,7 +175,6 @@ export interface ActionResult {
 	item_id?: string;
 	item_quantity?: number;
 	harvested?: string;
-	crafted?: string;
 	placed?: string;
 	upgraded?: string;
 	new_level?: number;
@@ -193,6 +194,8 @@ export interface TickChanges {
 	objects_added?: WorldObject[];
 	objects_removed?: string[];
 	respawned?: string[];
+	visible_tiles?: string[]; // Server-calculated visible tiles for fog of war
+	player_inventory?: InventorySnapshot; // Per-player inventory snapshot
 }
 
 export interface TickUpdate {
@@ -217,6 +220,8 @@ export interface FullGameState {
 	agents: Agent[];
 	messages: GameMessage[];
 	world_objects?: WorldObject[];
+	visible_tiles?: string[]; // Server-calculated visible tiles for fog of war
+	player_inventory?: InventorySnapshot; // Per-player inventory snapshot
 }
 
 export interface GameInfo {

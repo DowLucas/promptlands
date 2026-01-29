@@ -87,10 +87,9 @@ func (g *EnhancedWorldGenerator) generateTile(x, y, size int) EnhancedTileData {
 		}
 	}
 
-	// Add variation noise to create more natural biome boundaries
-	elevation += variation * 0.1
-	moisture += variation * 0.05
-	temperature += variation * 0.05
+	// Variation noise disabled to prevent biome fragmentation
+	// Large cohesive biome regions are preferred over organic edges
+	_ = variation // Keep sampling for potential future use
 
 	// Clamp values to 0-1
 	elevation = clamp(elevation, 0, 1)
@@ -116,12 +115,14 @@ func (g *EnhancedWorldGenerator) generateTile(x, y, size int) EnhancedTileData {
 }
 
 // sampleNoise samples noise with the given configuration
+// Uses GetEffectiveFrequency to scale frequency based on map size
 func (g *EnhancedWorldGenerator) sampleNoise(noise *NoiseGenerator, x, y int, config NoiseLayerConfig) float64 {
+	effectiveFreq := g.config.GetEffectiveFrequency(config.Frequency)
 	value := noise.Octave2D(
 		float64(x),
 		float64(y),
 		config.Octaves,
-		config.Frequency,
+		effectiveFreq,
 		config.Persistence,
 	)
 	return value * config.Amplitude

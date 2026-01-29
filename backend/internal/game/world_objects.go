@@ -560,6 +560,20 @@ func (m *WorldObjectManager) SnapshotVisible(center Position, radius int, viewer
 	return snapshots
 }
 
+// CountResourceNodes returns the number of resource node objects
+func (m *WorldObjectManager) CountResourceNodes() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	count := 0
+	for _, obj := range m.objects {
+		if obj.Type == ObjectResource {
+			count++
+		}
+	}
+	return count
+}
+
 // Clear removes all objects
 func (m *WorldObjectManager) Clear() {
 	m.mu.Lock()

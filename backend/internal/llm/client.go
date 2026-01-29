@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -112,25 +113,52 @@ func (c *GeminiClient) GetAction(ctx context.Context, agentID uuid.UUID, prompt 
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
+		slog.Error("LLM request failed", "agent_id", agentID, "model", c.model, "error", err)
 		return game.WaitAction(agentID), fmt.Errorf("request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
+		slog.Error("LLM response read failed", "agent_id", agentID, "model", c.model, "error", err)
 		return game.WaitAction(agentID), fmt.Errorf("failed to read response: %w", err)
 	}
 
+	if resp.StatusCode == http.StatusTooManyRequests {
+		retryAfter := resp.Header.Get("Retry-After")
+		slog.Warn("LLM rate limited",
+			"agent_id", agentID,
+			"model", c.model,
+			"status", resp.StatusCode,
+			"retry_after", retryAfter,
+			"body", string(body),
+		)
+		return game.WaitAction(agentID), fmt.Errorf("rate limited (status 429, retry-after: %s): %s", retryAfter, string(body))
+	}
+
 	if resp.StatusCode != http.StatusOK {
+		slog.Error("LLM API error",
+			"agent_id", agentID,
+			"model", c.model,
+			"status", resp.StatusCode,
+			"body", string(body),
+		)
 		return game.WaitAction(agentID), fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(body))
 	}
 
 	var geminiResp GeminiResponse
 	if err := json.Unmarshal(body, &geminiResp); err != nil {
+		slog.Error("LLM response parse failed", "agent_id", agentID, "model", c.model, "error", err)
 		return game.WaitAction(agentID), fmt.Errorf("failed to parse response: %w", err)
 	}
 
 	if geminiResp.Error != nil {
+		slog.Error("LLM API returned error",
+			"agent_id", agentID,
+			"model", c.model,
+			"error_code", geminiResp.Error.Code,
+			"error_message", geminiResp.Error.Message,
+		)
 		return game.WaitAction(agentID), fmt.Errorf("API error: %s", geminiResp.Error.Message)
 	}
 

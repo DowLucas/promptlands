@@ -41,6 +41,11 @@ func NewEnhancedWorldPopulator(
 // PopulateWorld adds all world objects using biome-aware loot tables
 func (wp *EnhancedWorldPopulator) PopulateWorld() {
 	wp.spawnBiomeResources()
+	wp.PopulateInteractives()
+}
+
+// PopulateInteractives adds all interactive objects (no resources)
+func (wp *EnhancedWorldPopulator) PopulateInteractives() {
 	wp.spawnShrines()
 	wp.spawnCaches()
 	wp.spawnPortals()

@@ -23,44 +23,44 @@ func InfernalRealmsPreset() *MapConfig {
 		Size:        MapSizeHuge, // 2048x2048
 		ChunkSize:   32,
 
-		// Noise scaled for larger maps
+		// Frequencies work without scaling
 		ElevationNoise: NoiseLayerConfig{
-			Octaves:     4,
-			Frequency:   0.0018,
+			Octaves:     3,
+			Frequency:   0.0025,
 			Persistence: 0.55,
 			Amplitude:   1.2,
 			SeedOffset:  0,
 		},
 		MoistureNoise: NoiseLayerConfig{
 			Octaves:     2,
-			Frequency:   0.0025,
+			Frequency:   0.003,
 			Persistence: 0.4,
 			Amplitude:   0.7, // Less moisture overall
 			SeedOffset:  1000,
 		},
 		TemperatureNoise: NoiseLayerConfig{
-			Octaves:     3,
-			Frequency:   0.0015,
+			Octaves:     2,
+			Frequency:   0.002,
 			Persistence: 0.5,
 			Amplitude:   1.3, // Hotter overall
 			SeedOffset:  2000,
 		},
 		VariationNoise: NoiseLayerConfig{
-			Octaves:     2,
-			Frequency:   0.01,
+			Octaves:     1,
+			Frequency:   0.003,
 			Persistence: 0.4,
-			Amplitude:   0.2,
+			Amplitude:   0.06,
 			SeedOffset:  3000,
 		},
 
 		BiomeDistributions: []BiomeDistribution{
 			{ElevationMin: 0.0, ElevationMax: 0.15, MoistureMin: 0.0, MoistureMax: 1.0, TemperatureMin: 0.0, TemperatureMax: 1.0, Biome: BiomeOcean, Priority: 100},
 			{ElevationMin: 0.88, ElevationMax: 1.0, MoistureMin: 0.0, MoistureMax: 1.0, TemperatureMin: 0.0, TemperatureMax: 1.0, Biome: BiomeMountain, Priority: 100},
-			// Heavy volcanic presence
-			{ElevationMin: 0.40, ElevationMax: 0.88, MoistureMin: 0.0, MoistureMax: 0.60, TemperatureMin: 0.55, TemperatureMax: 1.0, Biome: BiomeVolcanic, Priority: 90},
-			{ElevationMin: 0.25, ElevationMax: 0.65, MoistureMin: 0.0, MoistureMax: 0.45, TemperatureMin: 0.45, TemperatureMax: 0.75, Biome: BiomeBadlands, Priority: 85},
-			{ElevationMin: 0.20, ElevationMax: 0.55, MoistureMin: 0.0, MoistureMax: 0.35, TemperatureMin: 0.50, TemperatureMax: 0.90, Biome: BiomeDesert, Priority: 80},
-			{ElevationMin: 0.30, ElevationMax: 0.60, MoistureMin: 0.25, MoistureMax: 0.55, TemperatureMin: 0.60, TemperatureMax: 0.90, Biome: BiomePlasma, Priority: 75},
+			// Heavy volcanic presence - wide ranges
+			{ElevationMin: 0.40, ElevationMax: 0.88, MoistureMin: 0.0, MoistureMax: 0.60, TemperatureMin: 0.50, TemperatureMax: 1.0, Biome: BiomeVolcanic, Priority: 90},
+			{ElevationMin: 0.20, ElevationMax: 0.55, MoistureMin: 0.0, MoistureMax: 0.40, TemperatureMin: 0.40, TemperatureMax: 0.70, Biome: BiomeBadlands, Priority: 85},
+			{ElevationMin: 0.15, ElevationMax: 0.45, MoistureMin: 0.0, MoistureMax: 0.35, TemperatureMin: 0.55, TemperatureMax: 1.0, Biome: BiomeDesert, Priority: 80},
+			{ElevationMin: 0.25, ElevationMax: 0.50, MoistureMin: 0.30, MoistureMax: 0.60, TemperatureMin: 0.55, TemperatureMax: 0.90, Biome: BiomePlasma, Priority: 75},
 			{ElevationMin: 0.0, ElevationMax: 1.0, MoistureMin: 0.0, MoistureMax: 1.0, TemperatureMin: 0.0, TemperatureMax: 1.0, Biome: BiomeSavanna, Priority: 0},
 		},
 
@@ -83,6 +83,11 @@ func InfernalRealmsPreset() *MapConfig {
 		RespawnEnabled:       true,
 		FogOfWar:             true,
 		DifficultyMultiplier: 1.5,
+
+		FrequencyScaling: FrequencyScaling{
+			Enabled:       false,
+			ReferenceSize: 512,
+		},
 	}
 }
 
@@ -97,41 +102,41 @@ func FrozenWastesPreset() *MapConfig {
 		ChunkSize:   32,
 
 		ElevationNoise: NoiseLayerConfig{
-			Octaves:     3,
-			Frequency:   0.0015,
+			Octaves:     2,
+			Frequency:   0.002,
 			Persistence: 0.5,
 			Amplitude:   1.0,
 			SeedOffset:  0,
 		},
 		MoistureNoise: NoiseLayerConfig{
-			Octaves:     3,
-			Frequency:   0.002,
+			Octaves:     2,
+			Frequency:   0.0025,
 			Persistence: 0.5,
 			Amplitude:   1.0,
 			SeedOffset:  1000,
 		},
 		TemperatureNoise: NoiseLayerConfig{
 			Octaves:     2,
-			Frequency:   0.0012,
+			Frequency:   0.0015,
 			Persistence: 0.5,
 			Amplitude:   0.5, // Much colder overall
 			SeedOffset:  2000,
 		},
 		VariationNoise: NoiseLayerConfig{
-			Octaves:     2,
-			Frequency:   0.008,
+			Octaves:     1,
+			Frequency:   0.003,
 			Persistence: 0.4,
-			Amplitude:   0.1,
+			Amplitude:   0.06,
 			SeedOffset:  3000,
 		},
 
 		BiomeDistributions: []BiomeDistribution{
 			{ElevationMin: 0.0, ElevationMax: 0.18, MoistureMin: 0.0, MoistureMax: 1.0, TemperatureMin: 0.0, TemperatureMax: 1.0, Biome: BiomeOcean, Priority: 100},
 			{ElevationMin: 0.85, ElevationMax: 1.0, MoistureMin: 0.0, MoistureMax: 1.0, TemperatureMin: 0.0, TemperatureMax: 1.0, Biome: BiomeMountain, Priority: 100},
-			// Heavy ice presence
-			{ElevationMin: 0.18, ElevationMax: 0.85, MoistureMin: 0.0, MoistureMax: 1.0, TemperatureMin: 0.0, TemperatureMax: 0.45, Biome: BiomeIce, Priority: 90},
-			{ElevationMin: 0.50, ElevationMax: 0.85, MoistureMin: 0.30, MoistureMax: 0.80, TemperatureMin: 0.30, TemperatureMax: 0.55, Biome: BiomeCrystal, Priority: 85},
-			{ElevationMin: 0.25, ElevationMax: 0.60, MoistureMin: 0.50, MoistureMax: 1.0, TemperatureMin: 0.40, TemperatureMax: 0.60, Biome: BiomeForest, Priority: 70},
+			// Heavy ice presence - wide temperature range
+			{ElevationMin: 0.18, ElevationMax: 0.85, MoistureMin: 0.0, MoistureMax: 1.0, TemperatureMin: 0.0, TemperatureMax: 0.50, Biome: BiomeIce, Priority: 90},
+			{ElevationMin: 0.50, ElevationMax: 0.85, MoistureMin: 0.0, MoistureMax: 1.0, TemperatureMin: 0.35, TemperatureMax: 0.60, Biome: BiomeCrystal, Priority: 85},
+			{ElevationMin: 0.25, ElevationMax: 0.60, MoistureMin: 0.50, MoistureMax: 1.0, TemperatureMin: 0.45, TemperatureMax: 0.70, Biome: BiomeForest, Priority: 70},
 			{ElevationMin: 0.0, ElevationMax: 1.0, MoistureMin: 0.0, MoistureMax: 1.0, TemperatureMin: 0.0, TemperatureMax: 1.0, Biome: BiomeSavanna, Priority: 0},
 		},
 
@@ -154,6 +159,11 @@ func FrozenWastesPreset() *MapConfig {
 		RespawnEnabled:       true,
 		FogOfWar:             true,
 		DifficultyMultiplier: 1.3,
+
+		FrequencyScaling: FrequencyScaling{
+			Enabled:       false,
+			ReferenceSize: 512,
+		},
 	}
 }
 
@@ -168,42 +178,42 @@ func AncientWorldPreset() *MapConfig {
 		ChunkSize:   32,
 
 		ElevationNoise: NoiseLayerConfig{
-			Octaves:     4,
-			Frequency:   0.0008,
+			Octaves:     2,
+			Frequency:   0.0015,
 			Persistence: 0.5,
 			Amplitude:   1.0,
 			SeedOffset:  0,
 		},
 		MoistureNoise: NoiseLayerConfig{
-			Octaves:     3,
-			Frequency:   0.001,
+			Octaves:     2,
+			Frequency:   0.002,
 			Persistence: 0.55,
 			Amplitude:   1.1,
 			SeedOffset:  1000,
 		},
 		TemperatureNoise: NoiseLayerConfig{
 			Octaves:     2,
-			Frequency:   0.0008,
+			Frequency:   0.0012,
 			Persistence: 0.5,
 			Amplitude:   0.9,
 			SeedOffset:  2000,
 		},
 		VariationNoise: NoiseLayerConfig{
-			Octaves:     2,
-			Frequency:   0.004,
+			Octaves:     1,
+			Frequency:   0.002,
 			Persistence: 0.4,
-			Amplitude:   0.15,
+			Amplitude:   0.05,
 			SeedOffset:  3000,
 		},
 
 		BiomeDistributions: []BiomeDistribution{
 			{ElevationMin: 0.0, ElevationMax: 0.20, MoistureMin: 0.0, MoistureMax: 1.0, TemperatureMin: 0.0, TemperatureMax: 1.0, Biome: BiomeOcean, Priority: 100},
 			{ElevationMin: 0.88, ElevationMax: 1.0, MoistureMin: 0.0, MoistureMax: 1.0, TemperatureMin: 0.0, TemperatureMax: 1.0, Biome: BiomeMountain, Priority: 100},
-			// Ancient and forest focus
-			{ElevationMin: 0.35, ElevationMax: 0.70, MoistureMin: 0.25, MoistureMax: 0.70, TemperatureMin: 0.35, TemperatureMax: 0.70, Biome: BiomeAncient, Priority: 85},
-			{ElevationMin: 0.20, ElevationMax: 0.65, MoistureMin: 0.50, MoistureMax: 1.0, TemperatureMin: 0.30, TemperatureMax: 0.65, Biome: BiomeForest, Priority: 80},
-			{ElevationMin: 0.20, ElevationMax: 0.45, MoistureMin: 0.65, MoistureMax: 1.0, TemperatureMin: 0.40, TemperatureMax: 0.60, Biome: BiomeSwamp, Priority: 75},
-			{ElevationMin: 0.20, ElevationMax: 0.55, MoistureMin: 0.0, MoistureMax: 0.35, TemperatureMin: 0.55, TemperatureMax: 0.85, Biome: BiomeDesert, Priority: 70},
+			// Ancient and forest focus - wide ranges
+			{ElevationMin: 0.35, ElevationMax: 0.70, MoistureMin: 0.20, MoistureMax: 0.65, TemperatureMin: 0.30, TemperatureMax: 0.70, Biome: BiomeAncient, Priority: 85},
+			{ElevationMin: 0.20, ElevationMax: 0.60, MoistureMin: 0.55, MoistureMax: 1.0, TemperatureMin: 0.30, TemperatureMax: 0.65, Biome: BiomeForest, Priority: 80},
+			{ElevationMin: 0.20, ElevationMax: 0.40, MoistureMin: 0.70, MoistureMax: 1.0, TemperatureMin: 0.40, TemperatureMax: 0.65, Biome: BiomeSwamp, Priority: 75},
+			{ElevationMin: 0.20, ElevationMax: 0.50, MoistureMin: 0.0, MoistureMax: 0.35, TemperatureMin: 0.60, TemperatureMax: 1.0, Biome: BiomeDesert, Priority: 70},
 			{ElevationMin: 0.0, ElevationMax: 1.0, MoistureMin: 0.0, MoistureMax: 1.0, TemperatureMin: 0.0, TemperatureMax: 1.0, Biome: BiomeSavanna, Priority: 0},
 		},
 
@@ -226,6 +236,11 @@ func AncientWorldPreset() *MapConfig {
 		RespawnEnabled:       true,
 		FogOfWar:             true,
 		DifficultyMultiplier: 1.0,
+
+		FrequencyScaling: FrequencyScaling{
+			Enabled:       false,
+			ReferenceSize: 512,
+		},
 	}
 }
 
@@ -240,42 +255,42 @@ func NeonWildernessPreset() *MapConfig {
 		ChunkSize:   32,
 
 		ElevationNoise: NoiseLayerConfig{
-			Octaves:     3,
-			Frequency:   0.0018,
+			Octaves:     2,
+			Frequency:   0.002,
 			Persistence: 0.5,
 			Amplitude:   0.9,
 			SeedOffset:  0,
 		},
 		MoistureNoise: NoiseLayerConfig{
-			Octaves:     3,
-			Frequency:   0.0015,
+			Octaves:     2,
+			Frequency:   0.002,
 			Persistence: 0.6,
 			Amplitude:   1.2, // Wetter world
 			SeedOffset:  1000,
 		},
 		TemperatureNoise: NoiseLayerConfig{
-			Octaves:     3,
-			Frequency:   0.0012,
+			Octaves:     2,
+			Frequency:   0.0015,
 			Persistence: 0.55,
 			Amplitude:   1.1, // Warmer
 			SeedOffset:  2000,
 		},
 		VariationNoise: NoiseLayerConfig{
-			Octaves:     2,
-			Frequency:   0.01,
+			Octaves:     1,
+			Frequency:   0.003,
 			Persistence: 0.4,
-			Amplitude:   0.2,
+			Amplitude:   0.06,
 			SeedOffset:  3000,
 		},
 
 		BiomeDistributions: []BiomeDistribution{
 			{ElevationMin: 0.0, ElevationMax: 0.18, MoistureMin: 0.0, MoistureMax: 1.0, TemperatureMin: 0.0, TemperatureMax: 1.0, Biome: BiomeOcean, Priority: 100},
 			{ElevationMin: 0.85, ElevationMax: 1.0, MoistureMin: 0.0, MoistureMax: 1.0, TemperatureMin: 0.0, TemperatureMax: 1.0, Biome: BiomeMountain, Priority: 100},
-			// Neon and plasma dominance
-			{ElevationMin: 0.20, ElevationMax: 0.65, MoistureMin: 0.55, MoistureMax: 1.0, TemperatureMin: 0.55, TemperatureMax: 1.0, Biome: BiomeNeon, Priority: 90},
-			{ElevationMin: 0.30, ElevationMax: 0.65, MoistureMin: 0.20, MoistureMax: 0.60, TemperatureMin: 0.60, TemperatureMax: 0.95, Biome: BiomePlasma, Priority: 85},
-			{ElevationMin: 0.55, ElevationMax: 0.85, MoistureMin: 0.30, MoistureMax: 0.70, TemperatureMin: 0.30, TemperatureMax: 0.60, Biome: BiomeCrystal, Priority: 80},
-			{ElevationMin: 0.20, ElevationMax: 0.50, MoistureMin: 0.60, MoistureMax: 1.0, TemperatureMin: 0.35, TemperatureMax: 0.55, Biome: BiomeSwamp, Priority: 75},
+			// Neon and plasma dominance - wide ranges
+			{ElevationMin: 0.18, ElevationMax: 0.60, MoistureMin: 0.50, MoistureMax: 1.0, TemperatureMin: 0.50, TemperatureMax: 1.0, Biome: BiomeNeon, Priority: 90},
+			{ElevationMin: 0.25, ElevationMax: 0.60, MoistureMin: 0.15, MoistureMax: 0.55, TemperatureMin: 0.55, TemperatureMax: 0.95, Biome: BiomePlasma, Priority: 85},
+			{ElevationMin: 0.55, ElevationMax: 0.85, MoistureMin: 0.0, MoistureMax: 1.0, TemperatureMin: 0.25, TemperatureMax: 0.60, Biome: BiomeCrystal, Priority: 80},
+			{ElevationMin: 0.18, ElevationMax: 0.45, MoistureMin: 0.60, MoistureMax: 1.0, TemperatureMin: 0.30, TemperatureMax: 0.55, Biome: BiomeSwamp, Priority: 75},
 			{ElevationMin: 0.0, ElevationMax: 1.0, MoistureMin: 0.0, MoistureMax: 1.0, TemperatureMin: 0.0, TemperatureMax: 1.0, Biome: BiomeSavanna, Priority: 0},
 		},
 
@@ -298,6 +313,11 @@ func NeonWildernessPreset() *MapConfig {
 		RespawnEnabled:       true,
 		FogOfWar:             true,
 		DifficultyMultiplier: 1.1,
+
+		FrequencyScaling: FrequencyScaling{
+			Enabled:       false,
+			ReferenceSize: 512,
+		},
 	}
 }
 
@@ -312,43 +332,43 @@ func VoidIncursionPreset() *MapConfig {
 		ChunkSize:   32,
 
 		ElevationNoise: NoiseLayerConfig{
-			Octaves:     4,
+			Octaves:     2,
 			Frequency:   0.003,
 			Persistence: 0.5,
 			Amplitude:   1.1,
 			SeedOffset:  0,
 		},
 		MoistureNoise: NoiseLayerConfig{
-			Octaves:     3,
+			Octaves:     2,
 			Frequency:   0.0035,
 			Persistence: 0.45,
 			Amplitude:   0.9,
 			SeedOffset:  1000,
 		},
 		TemperatureNoise: NoiseLayerConfig{
-			Octaves:     3,
+			Octaves:     2,
 			Frequency:   0.0025,
 			Persistence: 0.55,
 			Amplitude:   1.0,
 			SeedOffset:  2000,
 		},
 		VariationNoise: NoiseLayerConfig{
-			Octaves:     3,
-			Frequency:   0.015,
-			Persistence: 0.5,
-			Amplitude:   0.25,
+			Octaves:     1,
+			Frequency:   0.004,
+			Persistence: 0.4,
+			Amplitude:   0.08,
 			SeedOffset:  3000,
 		},
 
 		BiomeDistributions: []BiomeDistribution{
 			{ElevationMin: 0.0, ElevationMax: 0.18, MoistureMin: 0.0, MoistureMax: 1.0, TemperatureMin: 0.0, TemperatureMax: 1.0, Biome: BiomeOcean, Priority: 100},
 			{ElevationMin: 0.88, ElevationMax: 1.0, MoistureMin: 0.0, MoistureMax: 1.0, TemperatureMin: 0.0, TemperatureMax: 1.0, Biome: BiomeMountain, Priority: 100},
-			// Void spreads from specific conditions
-			{ElevationMin: 0.40, ElevationMax: 0.80, MoistureMin: 0.0, MoistureMax: 0.35, TemperatureMin: 0.20, TemperatureMax: 0.50, Biome: BiomeVoid, Priority: 92},
-			{ElevationMin: 0.50, ElevationMax: 0.88, MoistureMin: 0.0, MoistureMax: 0.50, TemperatureMin: 0.65, TemperatureMax: 1.0, Biome: BiomeVolcanic, Priority: 85},
-			{ElevationMin: 0.20, ElevationMax: 0.50, MoistureMin: 0.60, MoistureMax: 1.0, TemperatureMin: 0.30, TemperatureMax: 0.55, Biome: BiomeSwamp, Priority: 80},
-			{ElevationMin: 0.55, ElevationMax: 0.88, MoistureMin: 0.35, MoistureMax: 0.75, TemperatureMin: 0.30, TemperatureMax: 0.55, Biome: BiomeCrystal, Priority: 75},
-			{ElevationMin: 0.25, ElevationMax: 0.55, MoistureMin: 0.45, MoistureMax: 0.85, TemperatureMin: 0.35, TemperatureMax: 0.60, Biome: BiomeForest, Priority: 65},
+			// Void spreads - wide ranges
+			{ElevationMin: 0.35, ElevationMax: 0.80, MoistureMin: 0.0, MoistureMax: 0.40, TemperatureMin: 0.15, TemperatureMax: 0.50, Biome: BiomeVoid, Priority: 92},
+			{ElevationMin: 0.50, ElevationMax: 0.88, MoistureMin: 0.0, MoistureMax: 0.50, TemperatureMin: 0.60, TemperatureMax: 1.0, Biome: BiomeVolcanic, Priority: 85},
+			{ElevationMin: 0.18, ElevationMax: 0.45, MoistureMin: 0.60, MoistureMax: 1.0, TemperatureMin: 0.30, TemperatureMax: 0.60, Biome: BiomeSwamp, Priority: 80},
+			{ElevationMin: 0.55, ElevationMax: 0.88, MoistureMin: 0.30, MoistureMax: 0.80, TemperatureMin: 0.30, TemperatureMax: 0.60, Biome: BiomeCrystal, Priority: 75},
+			{ElevationMin: 0.25, ElevationMax: 0.55, MoistureMin: 0.45, MoistureMax: 0.90, TemperatureMin: 0.35, TemperatureMax: 0.65, Biome: BiomeForest, Priority: 65},
 			{ElevationMin: 0.0, ElevationMax: 1.0, MoistureMin: 0.0, MoistureMax: 1.0, TemperatureMin: 0.0, TemperatureMax: 1.0, Biome: BiomeSavanna, Priority: 0},
 		},
 
@@ -371,6 +391,11 @@ func VoidIncursionPreset() *MapConfig {
 		RespawnEnabled:       true,
 		FogOfWar:             true,
 		DifficultyMultiplier: 2.0,
+
+		FrequencyScaling: FrequencyScaling{
+			Enabled:       false,
+			ReferenceSize: 512,
+		},
 	}
 }
 
@@ -385,42 +410,42 @@ func CrystallineExpansePreset() *MapConfig {
 		ChunkSize:   32,
 
 		ElevationNoise: NoiseLayerConfig{
-			Octaves:     4,
-			Frequency:   0.0015,
+			Octaves:     2,
+			Frequency:   0.002,
 			Persistence: 0.55,
 			Amplitude:   1.2, // More elevation variation
 			SeedOffset:  0,
 		},
 		MoistureNoise: NoiseLayerConfig{
-			Octaves:     3,
-			Frequency:   0.0018,
+			Octaves:     2,
+			Frequency:   0.0025,
 			Persistence: 0.5,
 			Amplitude:   1.0,
 			SeedOffset:  1000,
 		},
 		TemperatureNoise: NoiseLayerConfig{
 			Octaves:     2,
-			Frequency:   0.0015,
+			Frequency:   0.002,
 			Persistence: 0.5,
 			Amplitude:   0.85, // Cooler
 			SeedOffset:  2000,
 		},
 		VariationNoise: NoiseLayerConfig{
-			Octaves:     2,
-			Frequency:   0.008,
+			Octaves:     1,
+			Frequency:   0.003,
 			Persistence: 0.4,
-			Amplitude:   0.15,
+			Amplitude:   0.06,
 			SeedOffset:  3000,
 		},
 
 		BiomeDistributions: []BiomeDistribution{
 			{ElevationMin: 0.0, ElevationMax: 0.18, MoistureMin: 0.0, MoistureMax: 1.0, TemperatureMin: 0.0, TemperatureMax: 1.0, Biome: BiomeOcean, Priority: 100},
 			{ElevationMin: 0.88, ElevationMax: 1.0, MoistureMin: 0.0, MoistureMax: 1.0, TemperatureMin: 0.0, TemperatureMax: 1.0, Biome: BiomeMountain, Priority: 100},
-			// Crystal dominance
-			{ElevationMin: 0.45, ElevationMax: 0.88, MoistureMin: 0.20, MoistureMax: 0.80, TemperatureMin: 0.20, TemperatureMax: 0.65, Biome: BiomeCrystal, Priority: 90},
-			{ElevationMin: 0.20, ElevationMax: 0.60, MoistureMin: 0.0, MoistureMax: 0.50, TemperatureMin: 0.0, TemperatureMax: 0.35, Biome: BiomeIce, Priority: 85},
-			{ElevationMin: 0.25, ElevationMax: 0.55, MoistureMin: 0.50, MoistureMax: 1.0, TemperatureMin: 0.35, TemperatureMax: 0.60, Biome: BiomeForest, Priority: 75},
-			{ElevationMin: 0.35, ElevationMax: 0.65, MoistureMin: 0.25, MoistureMax: 0.60, TemperatureMin: 0.40, TemperatureMax: 0.65, Biome: BiomeAncient, Priority: 70},
+			// Crystal dominance - wide ranges
+			{ElevationMin: 0.40, ElevationMax: 0.88, MoistureMin: 0.0, MoistureMax: 1.0, TemperatureMin: 0.20, TemperatureMax: 0.70, Biome: BiomeCrystal, Priority: 90},
+			{ElevationMin: 0.18, ElevationMax: 0.55, MoistureMin: 0.0, MoistureMax: 1.0, TemperatureMin: 0.0, TemperatureMax: 0.35, Biome: BiomeIce, Priority: 85},
+			{ElevationMin: 0.20, ElevationMax: 0.50, MoistureMin: 0.55, MoistureMax: 1.0, TemperatureMin: 0.35, TemperatureMax: 0.65, Biome: BiomeForest, Priority: 75},
+			{ElevationMin: 0.30, ElevationMax: 0.55, MoistureMin: 0.20, MoistureMax: 0.60, TemperatureMin: 0.45, TemperatureMax: 0.70, Biome: BiomeAncient, Priority: 70},
 			{ElevationMin: 0.0, ElevationMax: 1.0, MoistureMin: 0.0, MoistureMax: 1.0, TemperatureMin: 0.0, TemperatureMax: 1.0, Biome: BiomeSavanna, Priority: 0},
 		},
 
@@ -443,5 +468,10 @@ func CrystallineExpansePreset() *MapConfig {
 		RespawnEnabled:       true,
 		FogOfWar:             true,
 		DifficultyMultiplier: 1.2,
+
+		FrequencyScaling: FrequencyScaling{
+			Enabled:       false,
+			ReferenceSize: 512,
+		},
 	}
 }

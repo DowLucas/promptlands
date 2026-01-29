@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { gameState, ownershipCounts } from '$lib/stores/game';
+	import { gameState, ownershipCounts, centerOnAgent } from '$lib/stores/game';
 	import { wsState } from '$lib/stores/ws';
 
 	$: status = $gameState.status;
@@ -9,6 +9,10 @@
 
 	function getAgentScore(agentId: string): number {
 		return $ownershipCounts.get(agentId) || 0;
+	}
+
+	function handleAgentClick(agentId: string) {
+		centerOnAgent(agentId);
 	}
 </script>
 
@@ -31,7 +35,7 @@
 		<h3>Agents</h3>
 		<div class="agent-list">
 			{#each agents as agent}
-				<div class="agent-row" class:player={agent.id === $gameState.playerAgentId}>
+				<button class="agent-row" class:player={agent.id === $gameState.playerAgentId} on:click={() => handleAgentClick(agent.id)}>
 					<span class="name">
 						{agent.name}
 						{#if agent.is_adversary}
@@ -39,7 +43,7 @@
 						{/if}
 					</span>
 					<span class="score">{getAgentScore(agent.id)} tiles</span>
-				</div>
+				</button>
 			{/each}
 		</div>
 	</div>
@@ -108,6 +112,18 @@
 		padding: 8px;
 		background: #1a1a2e;
 		border-radius: 4px;
+		border: none;
+		width: 100%;
+		cursor: pointer;
+		text-align: left;
+		font-size: inherit;
+		font-family: inherit;
+		color: inherit;
+		transition: background 0.15s ease;
+	}
+
+	.agent-row:hover {
+		background: #252540;
 	}
 
 	.agent-row.player {

@@ -15,6 +15,7 @@ import (
 	"github.com/lucas/promptlands/internal/config"
 	"github.com/lucas/promptlands/internal/db"
 	"github.com/lucas/promptlands/internal/game"
+	"github.com/lucas/promptlands/internal/game/actions"
 	"github.com/lucas/promptlands/internal/llm"
 	"github.com/lucas/promptlands/internal/ws"
 )
@@ -74,8 +75,19 @@ func main() {
 	hub := ws.NewHub()
 	go hub.Run()
 
-	// Initialize game manager
-	gameManager := game.NewManager(cfg.Game, llmClient, promptBuilder, hub, postgres, redis)
+	// Initialize handler registry
+	handlerRegistry := game.NewHandlerRegistry()
+	actions.RegisterAllHandlers(handlerRegistry)
+
+	// Initialize game manager with balance config
+	gameManager := game.NewManagerWithBalance(cfg.Game, cfg.Balance, llmClient, promptBuilder, hub, postgres, redis)
+	gameManager.SetHandlerRegistry(handlerRegistry)
+
+	// Set pause mode if configured
+	if cfg.Dev.PauseTick {
+		gameManager.SetPauseByDefault(true)
+		log.Println("Pause tick enabled: games will start paused (use ForceTick or Resume)")
+	}
 
 	// Set up HTTP routes
 	router := api.NewRouter(gameManager, hub, cfg)
